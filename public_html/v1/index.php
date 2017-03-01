@@ -112,7 +112,6 @@ $app->put('/trips/:tripId', function($tripId) use($app) {
     $sites = $app->request->put($requiredParams[6]);
 
     $databaseHelper = new DatabaseHelper();
-    // TODO updateDiveTrip function
     $response = $databaseHelper->updateDiveTrip($tripId, $groupSize, $numberOfDive, $date, $price, $priceNote, $guides, $sites);
     echoResponse(200, $response);
 });
@@ -130,7 +129,6 @@ $app->get('/courses', function() use($app) {
     $order = $app->request->params($requiredParams[2]);
 
     $databaseHelper = new DatabaseHelper();
-    // TODO getCourses function
     $response = $databaseHelper->getCourses($offset, $sort, $order);
     echoResponse(200, $response);
 });
@@ -147,7 +145,6 @@ $app->post('/courses', function() use($app) {
     $offeredBy = $app->request->params($requiredParams[2]);
 
     $databaseHelper = new DatabaseHelper();
-    // TODO addCourse function
     $response = $databaseHelper->addCourse($name, $description, $offeredBy);
     echoResponse(200, $response);
 });
@@ -162,7 +159,6 @@ $app->put('/courses/:courseId', function($courseId) use($app) {
     $offeredBy = $app->request->params($requiredParams[2]);
 
     $databaseHelper = new DatabaseHelper();
-    // TODO updateCourse
     $response = $databaseHelper->updateCourse($courseId, $name, $description, $offeredBy);
     echoResponse(200, $response);
 });
@@ -178,7 +174,6 @@ $app->get('/sites', function() use($app) {
     $offset = $app->request->params($requiredParams[1]);
 
     $databaseHelper = new DatabaseHelper();
-    // TODO getDiveSite function
     $response = $databaseHelper->getDiveSite($location, $offset);
     echoResponse(200, $response);
 });
@@ -194,7 +189,6 @@ $app->post('/sites', function() use($app) {
     $location = $app->request->params($requiredParams[2]);
 
     $databaseHelper = new DatabaseHelper();
-    // TODO addDiveSite function
     $response = $databaseHelper->addDiveSite($name, $description, $location);
     echoResponse(200, $response);
 });
@@ -210,7 +204,6 @@ $app->put('/sites/:siteId', function($siteId) use($app) {
     $location = $app->request->put($requiredParams[2]);
 
     $databaseHelper = new DatabaseHelper();
-    // TODO updateDiveSite function
     $response = $databaseHelper->updateDiveSite($siteId, $name, $description, $location);
     echoResponse(200, $response);
 });
@@ -227,7 +220,6 @@ $app->get('/shops', function() use($app) {
     $order = $app->request->params($requiredParams[3]);
 
     $databaseHelper = new DatabaseHelper();
-    // TODO getDiveShops function
     $response = $databaseHelper->getDiveShops($location, $offset, $sort, $order);
     echoResponse(200, $response);
 });
@@ -237,7 +229,6 @@ $app->get('/shops', function() use($app) {
  */
 $app->get('/shops/:shopUid', function($shopUid) {
     $databaseHelper = new DatabaseHelper();
-    // Todo getDiveShop
     $response = $databaseHelper->getDiveShop($shopUid);
     echoResponse(200, $response);
 });
@@ -251,7 +242,6 @@ $app->get('/shops/:shopUid/courses', function($shopUid) use ($app) {
     $offset = $app->request->params($requiredParams[0]);
     $sort = $app->request->params($requiredParams[1]);
     $order = $app->request->params($requiredParams[2]);
-    // TODO getDiveShopCourses
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getDiveShopCourses($shopUid, $offset, $sort, $order);
     echoResponse(200, $response);
@@ -265,7 +255,6 @@ $app->put('/shops/:shopUid/courses/:shopCourseId', function($shopUid, $shopCours
     verifyRequiredParams($requiredParams);
     $price = $app->request->put($requiredParams[0]);
     $databaseHelper = new DatabaseHelper();
-    // TODO updateDiveShopCourse
     $response = $databaseHelper->updateDiveShopCourse($shopUid, $shopCourseId, $price);
     echoResponse(200, $response);
 });

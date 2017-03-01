@@ -171,6 +171,50 @@ class DatabaseHelper {
             default : return 'ASC';
         }
     }
+    // Todo helper methods
+    public function updateDiveTrip($tripId, $groupSize, $numberOfDive, $date, $price, $priceNote, $guides, $sites) {
+        
+    }
+
+    public function getCourses($offset, $sort, $order) {
+        
+    }
+
+    public function addCourse($name, $description, $offeredBy) {
+        
+    }
+
+    public function updateCourse($courseId, $name, $description, $offeredBy) {
+        
+    }
+
+    public function getDiveSite($location, $offset) {
+        
+    }
+
+    public function addDiveSite($name, $description, $location) {
+        
+    }
+
+    public function updateDiveSite($siteId, $name, $description, $location) {
+        
+    }
+
+    public function getDiveShops($location, $offset, $sort, $order) {
+        
+    }
+
+    public function getDiveShop($shopUid) {
+        
+    }
+
+    public function getDiveShopCourses($shopUid, $offset, $sort, $order) {
+        
+    }
+
+    public function updateDiveShopCourse($shopUid, $shopCourseId, $price) {
+        
+    }
 
 }
 
