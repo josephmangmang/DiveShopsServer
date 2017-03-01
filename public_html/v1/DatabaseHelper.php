@@ -7,7 +7,8 @@
  */
 
 /**
- * Description of DatabaseHelper
+ * Helper class for manipulating data
+ * in the Database
  *
  * @author kali_root
  */
