@@ -1,0 +1,13 @@
+{
+    "name": "vendor/dive-tym",
+    "description": "Description of project DiveTym.",
+    "authors": [
+        {
+            "name": "Joseph Mangmang",
+            "email": "joseph.deplacer@gmail.com"
+        }
+    ],
+    "require": {
+        "slim/slim": "2.*"
+    }
+}

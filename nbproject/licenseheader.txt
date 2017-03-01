@@ -1,0 +1,9 @@
+<#if licenseFirst??>
+${licenseFirst}
+</#if>
+${licensePrefix}Copyright ${date?date?string("yyyy")} Joseph Mangmang.
+${licensePrefix}Created ${date?date?string("dd-MMM-yyyy")}
+${licensePrefix?replace(" +$", "", "r")}
+<#if licenseLast??>
+${licenseLast}
+</#if>
