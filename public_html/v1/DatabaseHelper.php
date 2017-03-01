@@ -17,6 +17,18 @@ class DatabaseHelper {
     private $conn;
     private static $ENCRYPT_UID_QUERY = 'SELECT HEX(AES_ENCRYPT(?, _lucid_)';
     private static $DECRYPT_UID_QUERY = 'SELECT AES_DECRYPT(UNHEX(?), _lucid_)';
+    // Table names
+    private static $TABLE_DIVE_SHOP = 'dive_shop';
+    private static $TABLE_DIVE_SHOP_COURSE = 'dive_shop_course';
+    private static $TABLE_BOAT = 'boat';
+    private static $TABLE_DAILY_TRIP = 'daily_trip';
+    private static $TABLE_DAILY_TRIP_BOAT = 'daily_trip_boat';
+    private static $TABLE_DAILY_TRIP_GUIDE = 'daily_trip_guide';
+    private static $TABLE_DAILY_TRIP_DIVE_SITE = 'daily_trip_dive_site';
+    private static $TABLE_DAILY_TRIP_GUEST = 'daily_trip_guest';
+    private static $TABLE_DIVER = 'diver';
+    private static $TABLE_DIVE_SITE = 'dive_site';
+    private static $TABLE_COURSE = 'course';
 
     public function __construct() {
         require '../../include/DatabaseConnection.php';
@@ -39,12 +51,12 @@ class DatabaseHelper {
         $updateQuery;
         switch ($type) {
             case AccountType::DIVE_SHOP:
-                $insertQuery = 'INSERT dive_shop(email, password) VALUES(?, ?)';
-                $updateQuery = 'UPDATE dive_shop SET uid = (' . self::$ENCRYPT_UID_QUERY . ') WHERE dive_shop_id = ?';
+                $insertQuery = 'INSERT ' . self::$TABLE_DIVE_SHOP . '(email, password) VALUES(?, ?)';
+                $updateQuery = 'UPDATE ' . self::$TABLE_DIVE_SHOP . ' SET uid = (' . self::$ENCRYPT_UID_QUERY . ') WHERE dive_shop_id = ?';
                 break;
             case AccountType::DIVER:
-                $insertQuery = 'INSERT diver(email, password) VALUES(?, ?)';
-                $updateQuery = 'UPDATE diver SET uid = (' . self::$ENCRYPT_UID_QUERY . ') WHERE diver_id = ?';
+                $insertQuery = 'INSERT ' . self::$TABLE_DIVER . '(email, password) VALUES(?, ?)';
+                $updateQuery = 'UPDATE ' . self::$TABLE_DIVER . ' SET uid = (' . self::$ENCRYPT_UID_QUERY . ') WHERE diver_id = ?';
                 break;
             default :
                 $response['error'] = true;
@@ -85,10 +97,10 @@ class DatabaseHelper {
         $response = array();
         switch ($type) {
             case AccountType::DIVE_SHOP:
-                $query = 'SELECT uid, password, name, create_time FROM dive_shop WHERE email = ?';
+                $query = 'SELECT uid, password, name, create_time FROM ' . self::$TABLE_DIVE_SHOP . ' WHERE email = ?';
                 break;
             case AccountType::DIVER:
-                $query = 'SELECT uid, password, name, create_time FROM diver WHERE email = ?';
+                $query = 'SELECT uid, password, name, create_time FROM ' . self::$TABLE_DIVER . ' WHERE email = ?';
                 break;
             default :
                 $response['error'] = true;
@@ -123,7 +135,7 @@ class DatabaseHelper {
      */
     public function addDiveTrip($shopId, $groupSize, $numberOfDives, $date, $price, $priceNote) {
         $response = array();
-        $query = 'INSERT INTO daily_trip(dive_shop_id, group_size, $number_of_dive, date, price, price_note) VALUES(' . self::$DECRYPT_UID_QUERY . ',?,?,?,?,?)';
+        $query = 'INSERT INTO ' . self::$TABLE_DAILY_TRIP . '(dive_shop_id, group_size, $number_of_dive, date, price, price_note) VALUES(' . self::$DECRYPT_UID_QUERY . ',?,?,?,?,?)';
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('siiids', $shopId, $groupSize, $numberOfDives, $date, $price, $priceNote);
         if ($stmt->execute()) {
@@ -147,10 +159,10 @@ class DatabaseHelper {
      */
     public function getDiveTrips($startDate, $endDate, $offset = 0, $sort = 'price', $order = 'ASC') {
         $response = array();
-        $query = 'SELECT daily_trip_id, dive_shop_id, group_size, number_of_dive, date, price FROM daily_trip ORDER BY ? ? LIMIT ?, ?';
+        $query = 'SELECT daily_trip_id, dive_shop_id, group_size, number_of_dive, date, price FROM ' . self::$TABLE_DAILY_TRIP . ' ORDER BY ? ? LIMIT ?, ?';
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('ssii', $sort, $this->getOrderType($order), $offset, $offset + 10);
-        if($stmt->execute()){
+        if ($stmt->execute()) {
             $stmt->bind_result($tripId, $shopId, $groupSize, $numberOfDive, $date, $price);
             $stmt->fetch();
             $stmt->prepare('SELECT ');
@@ -171,6 +183,7 @@ class DatabaseHelper {
             default : return 'ASC';
         }
     }
+
     // Todo helper methods
     public function updateDiveTrip($tripId, $groupSize, $numberOfDive, $date, $price, $priceNote, $guides, $sites) {
         
