@@ -334,7 +334,7 @@ function echoResponse($statusCode, $response) {
  * 
  */
 $app->notFound(function() {
-    $response = array('error' => true, 'message' => 'Url not found :(');
+    $response = array('error' => true, 'message' => 'Url not found');
     echoResponse(404, $response);
 });
 
