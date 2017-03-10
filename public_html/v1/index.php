@@ -23,10 +23,9 @@ $app = new \Slim\Slim(array('debug' => DEBUG));
  */
 $app->post('/register', function() use($app) {
     verifyRequiredParams(array('email', 'password', 'type'));
-    $email = $app->request->post('email');
-    $password = $app->request->post('password');
-    $type = $app->request->post('type');
-
+    $email = $app->request->params('email');
+    $password = $app->request->params('password');
+    $type = $app->request->params('type');
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->register($email, $password, $type);
     echoResponse(200, $response);
@@ -38,9 +37,9 @@ $app->post('/register', function() use($app) {
  */
 $app->post('/login', function() use($app) {
     verifyRequiredParams(array('email', 'password', 'type'));
-    $email = $app->request->post('email');
-    $password = $app->request->post('password');
-    $type = $app->request->post('type');
+    $email = $app->request->params('email');
+    $password = $app->request->params('password');
+    $type = $app->request->params('type');
 
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->login($email, $password, $type);
