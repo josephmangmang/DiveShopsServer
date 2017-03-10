@@ -295,7 +295,7 @@ function verifyRequiredParams($requiredParams) {
     $error = false;
     $requestParams = array();
     $requestParams = $_REQUEST;
-
+    $errorFields = '';
     if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
         $app = \Slim\Slim::getInstance();
         parse_str($app->request->getBody(), $requestParams);
