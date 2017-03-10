@@ -15,9 +15,9 @@
 class DatabaseHelper {
 
     private $conn;
+
     const ENCRYPT_UID_QUERY = 'SELECT HEX(AES_ENCRYPT(?, _lucid_)';
     const DECRYPT_UID_QUERY = 'SELECT AES_DECRYPT(UNHEX(?), _lucid_)';
-    
     // Table names
     const TABLE_DIVE_SHOP = 'dive_shop';
     const TABLE_DIVE_SHOP_COURSE = 'dive_shop_course';
@@ -30,6 +30,33 @@ class DatabaseHelper {
     const TABLE_DIVER = 'diver';
     const TABLE_DIVE_SITE = 'dive_site';
     const TABLE_COURSE = 'course';
+    // Column names
+    const COLUMN_DIVE_SHOP_ID = 'dive_shop_id';
+    const COLUMN_UID = 'uid';
+    const COLUMN_EMAIL = 'email';
+    const COLUMN_PASSWORD = 'password';
+    const COLUMN_NAME = 'name';
+    const COLUMN_CREATE_TIME = 'create_time';
+    const COLUMN_DESCRIPTION = 'description';
+    const COLUMN_CONTACT_NUMBER = 'contact_number';
+    const COLUMN_PRICE_PER_DIVE = 'price_per_dive';
+    const COLUMN_SPECIAL_SERVICE = 'special_service';
+    const COLUMN_DIVE_SHOP_COURSE_ID = 'dive_shop_course_id';
+    const COLUMN_PRICE = 'price';
+    const COLUMN_BOAT_ID = 'boat_id';
+    const COLUMN_IMAGE = 'image';
+    const COLUMN_DAILY_TRIP_ID = 'daily_trip_id';
+    const COLUMN_GROUP_SIZE = 'group_size';
+    const COLUMN_NUMBER_OF_DIVE = 'number_of_dive';
+    const COLUMN_DATE = 'date';
+    const COLUMN_PRICE_NOTE = 'price_note';
+    const COLUMN_GUIDE_NAME = 'guide_name';
+    const COLUMN_COURSE_ID = 'course_id';
+    const COLUMN_PHOTO_COVER = 'photo_cover';
+    const COLUMN_OFFERED_BY = 'offered_by';
+    const COLUMN_DIVE_SITE_ID = 'dive_site_id';
+    const COLUMN_ADDRESS = 'address';
+    const COLUMN_DIVER_ID = 'diver_id';
 
     public function __construct() {
         require '../../include/DatabaseConnection.php';
@@ -187,7 +214,7 @@ class DatabaseHelper {
 
     // Todo helper methods
     public function updateDiveTrip($tripId, $groupSize, $numberOfDive, $date, $price, $priceNote, $guides, $sites) {
-        
+
     }
 
     public function getCourses($offset, $sort, $order) {
