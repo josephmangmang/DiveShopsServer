@@ -142,7 +142,11 @@ class DatabaseHelper {
      */
     public function login($email, $password, $type) {
         $response = array();
-
+        if(!$this->isValidEmail($email)){
+            $response['error'] = true;
+            $response['message'] = 'Email address is not valid';
+            return $response;
+        }
         if ($type != 0 AND $type != 1) {
             $response['error'] = true;
             $response['message'] = 'Uknown user type';
