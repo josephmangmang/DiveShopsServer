@@ -119,27 +119,30 @@ class DatabaseHelper {
      */
     public function login($email, $password, $type) {
         $response = array();
-        switch ($type) {
-            case AccountType::DIVE_SHOP:
-                $query = 'SELECT uid, password, name, create_time FROM ' . self::TABLE_DIVE_SHOP . ' WHERE email = ?';
-                break;
-            case AccountType::DIVER:
-                $query = 'SELECT uid, password, name, create_time FROM ' . self::TABLE_DIVER . ' WHERE email = ?';
-                break;
-            default :
-                $response['error'] = true;
-                $response['message'] = 'Account type not valid ' . $type;
-                return $response;
+
+        if ($type != 0 AND $type != 1) {
+            $response['error'] = true;
+            $response['message'] = 'Uknown user type';
+            return $response;
         }
+
+        $query = 'SELECT ' .
+                self::COLUMN_USER_ID . ',' .
+                self::COLUMN_PASSWORD . ',' .
+                self::COLUMN_IS_DIVER . ' FROM ' .
+                self::TABLE_USER . ' WHERE ' .
+                self::COLUMN_EMAIL . '=?';
+
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('s', $email);
         if ($stmt->execute()) {
-            $stmt->bind_result($uid, $passwordHash, $name, $createTime);
+            $stmt->bind_result($userID, $passwordHash, $accountType);
             $stmt->fetch();
+            include_once '../../include/PassHash.php';
             if (PassHash::check_password($passwordHash, $password)) {
                 $response['error'] = false;
                 $response['message'] = 'Success';
-                $response['user'] = array('uid' => $uid, 'name' => $name, 'createTime' => $createTime);
+                $response['user'] = array('uid' => Security::encrypt($userID), 'acount_type' => $accountType);
             } else {
                 $response['error'] = true;
                 $response['message'] = "Email or password does't match";
