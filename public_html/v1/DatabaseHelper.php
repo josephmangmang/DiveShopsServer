@@ -16,9 +16,10 @@ class DatabaseHelper {
 
     private $conn;
 
-    const ENCRYPT_UID_QUERY = 'SELECT HEX(AES_ENCRYPT(?, _lucid_)';
+    const ENCRYPT_UID_QUERY = 'SELECT HEX(AES_ENCRYPT(?, _lucid_))';
     const DECRYPT_UID_QUERY = 'SELECT AES_DECRYPT(UNHEX(?), _lucid_)';
     // Table names
+    const TABLE_USER = 'user';
     const TABLE_DIVE_SHOP = 'dive_shop';
     const TABLE_DIVE_SHOP_COURSE = 'dive_shop_course';
     const TABLE_BOAT = 'boat';
@@ -31,8 +32,8 @@ class DatabaseHelper {
     const TABLE_DIVE_SITE = 'dive_site';
     const TABLE_COURSE = 'course';
     // Column names
+    const COLUMN_IS_DIVER = 'is_diver';
     const COLUMN_DIVE_SHOP_ID = 'dive_shop_id';
-    const COLUMN_UID = 'uid';
     const COLUMN_EMAIL = 'email';
     const COLUMN_PASSWORD = 'password';
     const COLUMN_NAME = 'name';
@@ -60,6 +61,9 @@ class DatabaseHelper {
 
     public function __construct() {
         require '../../include/DatabaseConnection.php';
+        require '../../include/Security.php';
+        require_once '../../include/Config.php';
+
         $db = new DatabaseConnection();
         $this->conn = $db->connect();
     }
@@ -72,42 +76,33 @@ class DatabaseHelper {
         if (!$this->emailValid($email)) {
             $response['error'] = true;
             $response['message'] = 'Email address is not valid';
+        }
+        if ($type != 0 AND $type != 1) {
+            $response['error'] = true;
+            $response['message'] = 'Uknown user type';
             return $response;
         }
+        include_once '../../include/PassHash.php';
         $passwordHash = PassHash::hash($password);
-        $insertQuery;
-        $updateQuery;
-        switch ($type) {
-            case AccountType::DIVE_SHOP:
-                $insertQuery = 'INSERT ' . self::TABLE_DIVE_SHOP . '(email, password) VALUES(?, ?)';
-                $updateQuery = 'UPDATE ' . self::TABLE_DIVE_SHOP . ' SET uid = (' . self::ENCRYPT_UID_QUERY . ') WHERE dive_shop_id = ?';
-                break;
-            case AccountType::DIVER:
-                $insertQuery = 'INSERT ' . self::TABLE_DIVER . '(email, password) VALUES(?, ?)';
-                $updateQuery = 'UPDATE ' . self::TABLE_DIVER . ' SET uid = (' . self::ENCRYPT_UID_QUERY . ') WHERE diver_id = ?';
-                break;
-            default :
-                $response['error'] = true;
-                $response['message'] = 'Account type not valid ' . $type;
-                return $response;
-        }
-        $stmt = $this->conn->prepare($insertQuery);
-        $stmt->bind_param('ss', $email, $passwordHash);
+        $query = 'INSERT ' . self::TABLE_USER . '(' .
+                self::COLUMN_EMAIL . ', ' .
+                self::COLUMN_PASSWORD . ',' .
+                self::COLUMN_IS_DIVER .
+                ') VALUES(?, ?, ?)';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('ssi', $email, $passwordHash, $type);
         if ($stmt->execute()) {
-            $id = $stmt->inset_id;
-            $stmt = $this->conn->prepare($updateQuery);
-            $stmt->bind_param('ii', $id, $id);
-            if ($stmt->execute()) {
-                $response['error'] = false;
-                $response['message'] = 'Registration complete';
-            } else {
-                $response['error'] = true;
-                $response['message'] = 'Cannot generate unique identifier';
-            }
+            $response['error'] = false;
+            $response['message'] = 'Registration complete';
         } else {
             $response['error'] = true;
-            $response['message'] = "An error occured while registering. " . $stmt->error;
+            if (strpos($stmt->error, 'Duplicate') !== false) {
+                $response['message'] = "Email already in use.";
+            } else {
+                $response['message'] = DEBUG ? $stmt->error : "An error occured while registering.";
+            }
         }
+        $stmt->close();
         return $response;
     }
 
@@ -115,7 +110,7 @@ class DatabaseHelper {
      * Validate email address
      */
     private function emailValid($email) {
-        return filter_var($email, FILTER_VALIDATE_EMAIL);
+        return filter_var($email, FILTER_VALIDATE_EMAIL) == true;
     }
 
     /**
@@ -163,7 +158,7 @@ class DatabaseHelper {
      */
     public function addDiveTrip($shopId, $groupSize, $numberOfDives, $date, $price, $priceNote) {
         $response = array();
-        $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP . '(dive_shop_id, group_size, $number_of_dive, date, price, price_note) VALUES(' . self::DECRYPT_UID_QUERY . ',?,?,?,?,?)';
+        $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP . '(dive_shop_id, group_size, number_of_dive, date, price, price_note) VALUES(' . self::DECRYPT_UID_QUERY . ',?,?,?,?,?)';
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('siiids', $shopId, $groupSize, $numberOfDives, $date, $price, $priceNote);
         if ($stmt->execute()) {
@@ -191,11 +186,16 @@ class DatabaseHelper {
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('ssii', $sort, $this->getOrderType($order), $offset, $offset + 10);
         if ($stmt->execute()) {
-            $stmt->bind_result($tripId, $shopId, $groupSize, $numberOfDive, $date, $price);
-            $stmt->fetch();
-            $stmt->prepare('SELECT ');
-            // TODO 
+            for ($i = 0; $i < $stmt->num_rows; $i++) {
+                $stmt->bind_result($tripId, $shopId, $groupSize, $numberOfDive, $date, $price);
+                $stmt->fetch();
+                $response[$i] = array('trip_id' => $tripId, 'shop_id' => $shopId, 'group_size' => $groupSize, 'number_of_dive' => $numberOfDive, 'date' => $date, 'price' => $price);
+                $response[$i]['guides'] = $this->getGuides($tripId);
+                $response[$i]['sites'] = $this->getDiveSitesByTripId($tripId);
+                $response[$i]['guest'] = $this->getGuestsByTripId($tripId);
+            }
         }
+        return $response;
     }
 
     /*
@@ -213,8 +213,34 @@ class DatabaseHelper {
     }
 
     // Todo helper methods
+    /**
+     * 
+     * @param int $tripId
+     * @param int $groupSize
+     * @param int $numberOfDive
+     * @param long $date
+     * @param double $price
+     * @param String $priceNote
+     * @param array $guides 
+     * @param array $sites
+     */
     public function updateDiveTrip($tripId, $groupSize, $numberOfDive, $date, $price, $priceNote, $guides, $sites) {
-
+        $query = 'UPDATE ' . self::TABLE_DAILY_TRIP .
+                ' SET ' .
+                self::COLUMN_GROUP_SIZE . '= ?,' .
+                self::COLUMN_NUMBER_OF_DIVE . '=?,' .
+                self::COLUMN_DATE . '=?,' .
+                self::COLUMN_PRICE . '=?,' .
+                self::COLUMN_PRICE_NOTE . '=?' .
+                ' WHERE ' .
+                self::COLUMN_DAILY_TRIP_ID . '=?';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('iiidsi', $groupSize, $numberOfDive, $date, $price, $priceNote, $tripId);
+        if ($stmt->execute()) {
+            $stmt->prepare('DELETE FROM ' . self::TABLE_DAILY_TRIP_GUIDE . ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?; ' .
+                    'INSERT INTO ' . self::TABLE_DAILY_TRIP_GUIDE . ' VALUES(?,?)');
+        }
+        // Todo ... update daily_trip table, daily_trip_guide table and daily_trip_dive_site table
     }
 
     public function getCourses($offset, $sort, $order) {
@@ -255,6 +281,52 @@ class DatabaseHelper {
 
     public function updateDiveShopCourse($shopUid, $shopCourseId, $price) {
         
+    }
+
+    /**
+     * 
+     * @param type $tripId
+     * @return array List of guides
+     */
+    public function getGuides($tripId) {
+        $response = array();
+        $stmt = $this->conn->prepare('SELECT guide_name FROM ' . self::TABLE_DAILY_TRIP_GUIDE . ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?');
+        $stmt->bind_param('i', $tripId);
+        if ($stmt->execute()) {
+            $guides = array();
+            for ($j = 0; $j < $stmt->rows; $j++) {
+                $stmt->bind_result($name);
+                $stmt->fetch();
+                $guides[] = $name;
+            }
+            $response[] = $guides;
+        }
+        $stmt->close();
+        return $response;
+    }
+
+    public function getDiveSitesByTripId($tripId) {
+        $response = array();
+        $stmt = $this->conn->prepare('SELECT ' . self::COLUMN_DIVE_SHOP . ' FROM ' . self::TABLE_DAILY_TRIP_DIVE_SITE . ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?');
+        $stmt->bind_param('i', $tripId);
+        if ($stmt->execute()) {
+            for ($k = 0; $k < $stmt->rows; $k++) {
+                $stmt->bind_result($siteId);
+                $stmt->fetch();
+                $stmt->prepare('SELECT ' . self::COLUMN_NAME . ',' . self::COLUMN_ADDRESS . ',' . self::COLUMN_DESCRIPTION . ' WHERE ' . self::COLUMN_DIVE_SITE_ID . '=$siteId');
+                if ($stmt->execute()) {
+                    $sites = array();
+                    for ($y = 0; $y < $stmt->rows; $y++) {
+                        $stmt->bind_result($siteName, $siteAddress, $siteDescription);
+                        $stmt->fetch();
+                        $sites[] = array('name' => $siteName, 'address' => $siteAddress, 'description' => $siteDescription);
+                    }
+                    $response[] = $sites;
+                }
+            }
+        }
+        $stmt->close();
+        return $response;
     }
 
 }
