@@ -93,8 +93,31 @@ class DatabaseHelper {
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('ssi', $email, $passwordHash, $type);
         if ($stmt->execute()) {
-            $response['error'] = false;
-            $response['message'] = 'Registration complete';
+            $userId = $stmt->insert_id;
+            $response['user_id'] = $userId;
+            $stmt->close();
+            switch ($type) {
+                case AccountType::DIVE_SHOP:
+                    $query = 'INSERT ' . self::TABLE_DIVE_SHOP . '(' . self::COLUMN_USER_ID . ') VALUES(?)';
+                    break;
+                case AccountType::DIVER:
+                    $query = 'INSERT ' . self::TABLE_DIVE_SHOP . '(' . self::COLUMN_USER_ID . ') VALUES(?)';
+                    break;
+                default :
+                    $response['error'] = true;
+                    $response['type'] = $type;
+                    $response['message'] = 'Unkown account type';
+                    return $response;
+            }
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param('i', $userId);
+            if ($stmt->execute()) {
+                $response['error'] = false;
+                $response['message'] = 'Registration complete';
+            } else {
+                $response['error'] = true;
+                $response['message'] = 'An error occured while registering. ' . $stmt->error;
+            }
         } else {
             $response['error'] = true;
             if (strpos($stmt->error, 'Duplicate') !== false) {
