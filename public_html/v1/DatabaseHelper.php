@@ -74,9 +74,10 @@ class DatabaseHelper {
      */
     public function register($email, $password, $type) {
         $response = array();
-        if (!$this->emailValid($email)) {
+        if (!$this->isValidEmail($email)) {
             $response['error'] = true;
             $response['message'] = 'Email address is not valid';
+            return $response;
         }
         if ($type != 0 AND $type != 1) {
             $response['error'] = true;
@@ -133,8 +134,8 @@ class DatabaseHelper {
     /**
      * Validate email address
      */
-    private function emailValid($email) {
-        return filter_var($email, FILTER_VALIDATE_EMAIL) == true;
+    private function isValidEmail($email) {
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
 
     /**
