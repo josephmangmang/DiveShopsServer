@@ -32,6 +32,7 @@ class DatabaseHelper {
     const TABLE_DIVE_SITE = 'dive_site';
     const TABLE_COURSE = 'course';
     // Column names
+    const COLUMN_USER_ID = 'user_id';
     const COLUMN_IS_DIVER = 'is_diver';
     const COLUMN_DIVE_SHOP_ID = 'dive_shop_id';
     const COLUMN_EMAIL = 'email';
@@ -61,7 +62,7 @@ class DatabaseHelper {
 
     public function __construct() {
         require '../../include/DatabaseConnection.php';
-        require '../../include/Security.php';
+        require_once '../../include/Security.php';
         require_once '../../include/Config.php';
 
         $db = new DatabaseConnection();
