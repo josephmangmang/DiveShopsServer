@@ -95,7 +95,6 @@ class DatabaseHelper {
         $stmt->bind_param('ssi', $email, $passwordHash, $type);
         if ($stmt->execute()) {
             $userId = $stmt->insert_id;
-            $response['user_id'] = $userId;
             $stmt->close();
             switch ($type) {
                 case AccountType::DIVE_SHOP:
