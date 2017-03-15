@@ -17,6 +17,24 @@ if (DEBUG) {
 // Initialize Slim Framework
 $app = new \Slim\Slim(array('debug' => DEBUG));
 
+/**
+ * Test descrypt method
+ */
+$app->get('/test/descrypt', function() use($app){
+    include_once '../../include/Security.php';
+    $val = $app->request->params('val');
+    echo Security::decrypt($val);
+});
+
+/**
+ * Test encrypt method
+ */
+$app->get('/test/encrypt', function() use($app){
+    include_once '../../include/Security.php';
+    $val = $app->request->params('val');
+    echo Security::encrypt($val);
+});
+
 /*
  * Diver and Dive Shop registration
  * @param email, password, type
