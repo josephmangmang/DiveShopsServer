@@ -169,7 +169,10 @@ class DatabaseHelper {
             if (PassHash::check_password($passwordHash, $password)) {
                 $response['error'] = false;
                 $response['message'] = 'Success';
-                $response['user'] = array('uid' => Security::encrypt($userID), 'acount_type' => $accountType);
+                $response['user'] = array(
+                    'uid' => Security::encrypt($userID),
+                    'auth_key' => 'TODO auth_key',
+                    'acount_type' => $accountType);
             } else {
                 $response['error'] = true;
                 $response['message'] = "Email or password does't match";
