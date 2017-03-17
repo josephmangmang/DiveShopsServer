@@ -98,10 +98,10 @@ class DatabaseHelper {
             $stmt->close();
             switch ($type) {
                 case AccountType::DIVE_SHOP:
-                    $query = 'INSERT ' . self::TABLE_DIVE_SHOP . '(' . self::COLUMN_USER_ID . ') VALUES(?)';
+                    $query = 'INSERT ' . self::TABLE_DIVE_SHOP . '(' . self::COLUMN_DIVE_SHOP_ID . ') VALUES(?)';
                     break;
                 case AccountType::DIVER:
-                    $query = 'INSERT ' . self::TABLE_DIVER . '(' . self::COLUMN_USER_ID . ') VALUES(?)';
+                    $query = 'INSERT ' . self::TABLE_DIVER . '(' . self::COLUMN_DIVER_ID . ') VALUES(?)';
                     break;
                 default :
                     $response['error'] = true;
