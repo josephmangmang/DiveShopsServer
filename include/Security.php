@@ -15,7 +15,11 @@ class Security {
     }
 
     public static function decrypt($val) {
-        return static::aes_decrypt(hex2bin($val));
+        try {
+            return static::aes_decrypt(hex2bin($val));
+        } catch (Exception $exc) {
+            return -1;
+        }
     }
 
     private static function aes_encrypt($val) {
