@@ -32,7 +32,7 @@ class Security {
     private static function aes_decrypt($val) {
         $key = static::mysql_aes_key(static::$magicKey);
         $val = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $val, MCRYPT_MODE_ECB, mcrypt_create_iv(mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_ECB), MCRYPT_DEV_URANDOM));
-        return $val; // rtrim($val, "..16");
+        return rtrim($val, "16");
     }
 
     private static function mysql_aes_key($key) {
