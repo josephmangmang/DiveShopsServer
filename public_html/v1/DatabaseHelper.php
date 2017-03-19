@@ -363,6 +363,23 @@ class DatabaseHelper {
         return $response;
     }
 
+    public function addBoat($diveShopUid, $name) {
+        $diveShopUid = Security::decrypt($diveShopUid);
+        $response = array();
+        $stmt = $this->conn->prepare('INSERT INTO ' . self::TABLE_BOAT . '(' . self::COLUMN_DIVE_SHOP_ID . ',' . self::COLUMN_NAME . ') VALUES (?,?)');
+        $stmt->bind_param('is', $diveShopUid, $name);
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = $name . ' successfully added';
+        } else {
+            $response['error'] = true;
+            $response['message'] = 'An error occured while adding Boat. ';
+            $response['shop_id'] = $diveShopUid;
+            $response['details'] = $stmt->error;
+        }
+        return $response;
+    }
+
 }
 
 class AccountType {
