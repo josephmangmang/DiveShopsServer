@@ -292,16 +292,27 @@ $app->post('/shops/:shopUid/courses', function($shopUid) use($app) {
  * Get list of Dive Shop Dive Trips
  */
 $app->get('/shops/:shopUid/trips', function($shopUid) use ($app) {
-   $requiredParams = array('start_date', 'end_date', 'offset', 'sort', 'order');
-   verifyRequiredParams($requiredParams);
-   $startDate = $app->request->params($requiredParams[0]);
-   $endData = $app->request->params($requiredParams[1]);
-   $offset = $app->request->params($requiredParams[2]);
-   $sort = $app->request->params($requiredParams[3]);
-   $order = $app->request->params($requiredParams[4]);
-   $databaseHelper = new DatabaseHelper();
-   $response = $databaseHelper->getDiveShopDiveTrips($shopUid, $startDate, $endData, $offset, $sort, $order);
-   echoResponse(200, $response);
+    $requiredParams = array('start_date', 'end_date', 'offset', 'sort', 'order');
+    verifyRequiredParams($requiredParams);
+    $startDate = $app->request->params($requiredParams[0]);
+    $endData = $app->request->params($requiredParams[1]);
+    $offset = $app->request->params($requiredParams[2]);
+    $sort = $app->request->params($requiredParams[3]);
+    $order = $app->request->params($requiredParams[4]);
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->getDiveShopDiveTrips($shopUid, $startDate, $endData, $offset, $sort, $order);
+    echoResponse(200, $response);
+});
+
+/**
+ * Add new boat
+ */
+$app->post('/shops/:shopUid/boats', function ($shopUid) use ($app) {
+    verifyRequiredParams(array('name'));
+    $name = $app->request->params('name');
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->addBoat($shopUid, $name);
+    echoResponse(200, $response);
 });
 
 /**
