@@ -98,10 +98,10 @@ class DatabaseHelper {
             $stmt->close();
             switch ($type) {
                 case AccountType::DIVE_SHOP:
-                    $query = 'INSERT ' . self::TABLE_DIVE_SHOP . '(' . self::COLUMN_DIVE_SHOP_ID . ') VALUES(?)';
+                    $query = 'INSERT ' . self::TABLE_DIVE_SHOP . '(' . self::COLUMN_USER_ID . ') VALUES(?)';
                     break;
                 case AccountType::DIVER:
-                    $query = 'INSERT ' . self::TABLE_DIVER . '(' . self::COLUMN_DIVER_ID . ') VALUES(?)';
+                    $query = 'INSERT ' . self::TABLE_DIVER . '(' . self::COLUMN_USER_ID . ') VALUES(?)';
                     break;
                 default :
                     $response['error'] = true;
@@ -142,7 +142,7 @@ class DatabaseHelper {
      */
     public function login($email, $password, $type) {
         $response = array();
-        if(!$this->isValidEmail($email)){
+        if (!$this->isValidEmail($email)) {
             $response['error'] = true;
             $response['message'] = 'Email address is not valid';
             return $response;
