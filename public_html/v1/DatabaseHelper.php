@@ -289,8 +289,22 @@ class DatabaseHelper {
         
     }
 
-    public function addCourse($name, $description, $offeredBy) {
-        
+    public function addCourse($name, $description = '', $offeredBy = '') {
+        $response = array('error' => true, 'message' => 'An error occured while adding Course. ');
+        $stmt = $this->conn->prepare('INSERT INTO ' .
+                self::TABLE_COURSE . '(' .
+                self::COLUMN_NAME . ',' . self::COLUMN_DESCRIPTION . ',' . self::COLUMN_OFFERED_BY .
+                ') VALUES(?, ?, ?)');
+        $stmt->bind_param('sss', $name, $description, $offeredBy);
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = "$name Successfully added";
+        } else if (strpos($stmt->error, 'Duplicate') !== false) {
+            $response['message'] = "Dive course $name already exist";
+        }else{
+            $response['message'] = $response['message'] . $stmt->error;
+        }
+        return $response;
     }
 
     public function updateCourse($courseId, $name, $description, $offeredBy) {

@@ -163,7 +163,7 @@ $app->get('/courses', function() use($app) {
  */
 $app->post('/courses', function() use($app) {
     $requiredParams = array('name', 'description', 'offered_by');
-    verifyRequiredParams($requiredParams);
+    verifyRequiredParams(array('name', 'offered_by'));
     $name = $app->request->params($requiredParams[0]);
     $description = $app->request->params($requiredParams[1]);
     $offeredBy = $app->request->params($requiredParams[2]);
