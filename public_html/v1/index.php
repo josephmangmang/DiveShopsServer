@@ -178,9 +178,10 @@ $app->post('/courses', function() use($app) {
  */
 $app->put('/courses/:courseId', function($courseId) use($app) {
     $requiredParams = array('name', 'description', 'offered_by');
-    $name = $app->request->params($requiredParams[0]);
-    $description = $app->request->params($requiredParams[1]);
-    $offeredBy = $app->request->params($requiredParams[2]);
+    verifyRequiredParams($requiredParams);
+    $name = $app->request->put($requiredParams[0]);
+    $description = $app->request->put($requiredParams[1]);
+    $offeredBy = $app->request->put($requiredParams[2]);
 
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->updateCourse($courseId, $name, $description, $offeredBy);

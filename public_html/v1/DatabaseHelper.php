@@ -301,14 +301,32 @@ class DatabaseHelper {
             $response['message'] = "$name Successfully added";
         } else if (strpos($stmt->error, 'Duplicate') !== false) {
             $response['message'] = "Dive course $name already exist";
-        }else{
+        } else {
             $response['message'] = $response['message'] . $stmt->error;
         }
         return $response;
     }
 
     public function updateCourse($courseId, $name, $description, $offeredBy) {
-        
+        $response = array('error' => true, 'message' => 'An error occured while updating course. ');
+        $stmt = $this->conn->prepare('UPDATE ' .
+                self::TABLE_COURSE . ' SET ' .
+                self::COLUMN_NAME . '=?,' .
+                self::COLUMN_DESCRIPTION . '=?, ' .
+                self::COLUMN_OFFERED_BY . '=? WHERE ' .
+                self::COLUMN_COURSE_ID . '=?');
+        $stmt->bind_param('sssi', $name, $description, $offeredBy, $courseId);
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = "$name successfully updated.";
+            if ($stmt->affected_rows < 1) {
+                $response['error'] = true;
+                $response['message'] = "$name doesn't exist.";
+            }
+        } else {
+            $response['message'] = $response['message'] . $stmt->error;
+        }
+        return $response;
     }
 
     public function getDiveSite($location, $offset) {
