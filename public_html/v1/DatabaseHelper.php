@@ -64,6 +64,8 @@ class DatabaseHelper {
     const COLUMN_DIVE_SITE_ID = 'dive_site_id';
     const COLUMN_ADDRESS = 'address';
     const COLUMN_DIVER_ID = 'diver_id';
+    const COLUMN_LATITUDE = 'latitude';
+    const COLUMN_LONGTITUDE = 'longitude';
 
     private $hashids;
 
@@ -333,8 +335,25 @@ class DatabaseHelper {
         
     }
 
-    public function addDiveSite($name, $description, $location) {
-        
+    public function addDiveSite($name, $description, $address, $latitude, $longitude) {
+        $response = array('error' => true, 'message' => 'An error occured while adding Dive Site. ');
+        $query = 'INSERT INTO ' . self::TABLE_DIVE_SITE . '(' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_ADDRESS . ',' .
+                self::COLUMN_LATITUDE . ',' .
+                self::COLUMN_LONGTITUDE . ') VALUES(?,?,?,?,?)';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('sssdd', $name, $description, $address, $latitude, $longitude);
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = "$name successfully added";
+        } else if (strpos($stmt->error, "Duplicate") !== false) {
+            $response['message'] = "$name already exist";
+        } else {
+            $response['message'] = $response['message'] . $stmt->error;
+        }
+        return $response;
     }
 
     public function updateDiveSite($siteId, $name, $description, $location) {

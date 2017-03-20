@@ -207,14 +207,16 @@ $app->get('/sites', function() use($app) {
  * Add new Dive Site
  */
 $app->post('/sites', function() use($app) {
-    $requiredParams = array('name', 'description', 'location');
+    $requiredParams = array('name', 'description', 'address', 'latitude', 'longitude');
     verifyRequiredParams($requiredParams);
     $name = $app->request->params($requiredParams[0]);
     $description = $app->request->params($requiredParams[1]);
-    $location = $app->request->params($requiredParams[2]);
-
+    $address = $app->request->params($requiredParams[2]);
+    $latitude = $app->request->params($requiredParams[3]);
+    $longitude = $app->request->params($requiredParams[4]);
+    
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->addDiveSite($name, $description, $location);
+    $response = $databaseHelper->addDiveSite($name, $description, $address, $latitude, $longitude);
     echoResponse(200, $response);
 });
 
