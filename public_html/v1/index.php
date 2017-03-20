@@ -26,9 +26,9 @@ $app->get('/test/descrypt', function() use($app) {
     $val = $app->request->params('val');
     $hashids = new Hashids('', 20);
     $decode = $hashids->decode($val);
-    if(count($decode) > 0){
+    if (count($decode) > 0) {
         echo $decode[0];
-    }else{
+    } else {
         echo -1;
     }
 });
@@ -325,8 +325,8 @@ $app->post('/shops/:shopUid/boats', function ($shopUid) use ($app) {
 /**
  * Get a list of boats
  */
-$app->get('/shops/:shopUid/boats', function($shopUid) use ($app){
-    
+$app->get('/shops/:shopUid/boats', function($shopUid) use ($app) {
+
     $offset = $app->request->params('offset');
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getBoats($shopUid, $offset);
@@ -336,11 +336,19 @@ $app->get('/shops/:shopUid/boats', function($shopUid) use ($app){
 /**
  * Update boat
  */
-$app->put('/boats/:boatId', function($boatId) use ($app){
+$app->put('/boats/:boatId', function($boatId) use ($app) {
     verifyRequiredParams(array('name'));
     $name = $app->request->put('name');
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->updateBoat($boatId, $name);
+    echoResponse(200, $response);
+});
+/**
+ * Delete boat
+ */
+$app->delete('/boats/:boatId', function($boatId) use ($app) {
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->deleteBoat($boatId);
     echoResponse(200, $response);
 });
 

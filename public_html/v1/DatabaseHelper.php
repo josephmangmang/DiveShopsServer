@@ -450,6 +450,23 @@ class DatabaseHelper {
         return $response;
     }
 
+    public function deleteBoat($boatId) {
+        $response = array('error' => true, 'message' => 'An error occured while deleting boat. ');
+        $stmt = $this->conn->prepare('DELETE FROM ' . self::TABLE_BOAT . ' WHERE ' . self::COLUMN_BOAT_ID . '=?');
+        $stmt->bind_param('i', $boatId);
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = 'Success';
+            if ($stmt->affected_rows < 1) {
+                $response['error'] = true;
+                $response['message'] = "Boat doesn't exist";
+            }
+        } else {
+            $response['message'] = $response['message'] . $stmt->error;
+        }
+        return $response;
+    }
+
 }
 
 class AccountType {
