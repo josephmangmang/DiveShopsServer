@@ -65,12 +65,15 @@ class DatabaseHelper {
     const COLUMN_ADDRESS = 'address';
     const COLUMN_DIVER_ID = 'diver_id';
 
+    private $hashids;
+    
     public function __construct() {
         require '../../include/DatabaseConnection.php';
         require_once '../../include/Config.php';
 
         $db = new DatabaseConnection();
         $this->conn = $db->connect();
+        $this->hashids = new Hashids('', 20);
     }
 
     /**
@@ -174,9 +177,8 @@ class DatabaseHelper {
                 $response['error'] = false;
                 $response['message'] = 'Success';
 
-                $hashids = new Hashids('', 20);
                 $response['user'] = array(
-                    'uid' => $hashids->encode($val),
+                    'uid' => $this->hashids->encode($val),
                     'auth_key' => 'TODO auth_key',
                     'acount_type' => $accountType);
             } else {
@@ -370,8 +372,7 @@ class DatabaseHelper {
     }
 
     public function addBoat($diveShopUid, $name) {
-        $hashids = new Hashids('', 20);
-        $decode = $hashids->decode($diveShopUid);
+        $decode = $this->hashids->decode($diveShopUid);
         if(count($decode) < 1){
             $response['error'] = true;
             $response['message'] = 'An error occured while adding Boat. Invalid dive_shop_id';
@@ -393,7 +394,7 @@ class DatabaseHelper {
         return $response;
     }
 
-}
+    }
 
 class AccountType {
 
