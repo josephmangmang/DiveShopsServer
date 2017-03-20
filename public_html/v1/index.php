@@ -334,6 +334,17 @@ $app->get('/shops/:shopUid/boats', function($shopUid) use ($app){
 });
 
 /**
+ * Update boat
+ */
+$app->put('/boats/:boatId', function($boatId) use ($app){
+    verifyRequiredParams(array('name'));
+    $name = $app->request->put('name');
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->updateBoat($boatId, $name);
+    echoResponse(200, $response);
+});
+
+/**
  * Verify required parameters before accessing it.
  * 
  */

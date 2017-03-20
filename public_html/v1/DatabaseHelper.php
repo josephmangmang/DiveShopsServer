@@ -434,6 +434,22 @@ class DatabaseHelper {
         return $response;
     }
 
+    public function updateBoat($boatId, $name) {
+        $response = array('error' => true, 'message' => 'An error occured while updating boat. ');
+        $stmt = $this->conn->prepare('UPDATE ' .
+                self::TABLE_BOAT . ' SET ' .
+                self::COLUMN_NAME . '=?  WHERE ' .
+                self::COLUMN_BOAT_ID . '=?');
+        $stmt->bind_param('si', $name, $boatId);
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = 'Success';
+        } else {
+            $response['message'] = $response['message'] . $stmt->error;
+        }
+        return $response;
+    }
+
 }
 
 class AccountType {
