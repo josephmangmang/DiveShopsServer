@@ -5,13 +5,18 @@
  * Created 15-Feb-2017
  *
  */
-
 /**
  * Helper class for manipulating data
  * in the Database
  *
  * @author kali_root
  */
+
+/**
+ * Import
+ */
+use Hashids\Hashids;
+
 class DatabaseHelper {
 
     private $conn;
@@ -62,7 +67,6 @@ class DatabaseHelper {
 
     public function __construct() {
         require '../../include/DatabaseConnection.php';
-        require_once '../../include/Security.php';
         require_once '../../include/Config.php';
 
         $db = new DatabaseConnection();
@@ -169,8 +173,10 @@ class DatabaseHelper {
             if (PassHash::check_password($passwordHash, $password)) {
                 $response['error'] = false;
                 $response['message'] = 'Success';
+
+                $hashids = new Hashids('', 20);
                 $response['user'] = array(
-                    'uid' => Security::encrypt($userID),
+                    'uid' => $hashids->encode($val),
                     'auth_key' => 'TODO auth_key',
                     'acount_type' => $accountType);
             } else {
@@ -364,7 +370,14 @@ class DatabaseHelper {
     }
 
     public function addBoat($diveShopUid, $name) {
-        $diveShopUid = Security::decrypt($diveShopUid);
+        $hashids = new Hashids('', 20);
+        $decode = $hashids->decode($diveShopUid);
+        if(count($decode) < 1){
+            $response['error'] = true;
+            $response['message'] = 'An error occured while adding Boat. Invalid dive_shop_id';
+            return $response;
+        }
+        $diveShopUid = $decode[0];
         $response = array();
         $stmt = $this->conn->prepare('INSERT INTO ' . self::TABLE_BOAT . '(' . self::COLUMN_DIVE_SHOP_ID . ',' . self::COLUMN_NAME . ') VALUES (?,?)');
         $stmt->bind_param('is', $diveShopUid, $name);

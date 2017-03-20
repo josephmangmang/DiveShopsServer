@@ -20,19 +20,26 @@ $app = new \Slim\Slim(array('debug' => DEBUG));
 /**
  * Test descrypt method
  */
-$app->get('/test/descrypt', function() use($app){
-    include_once '../../include/Security.php';
+use Hashids\Hashids;
+
+$app->get('/test/descrypt', function() use($app) {
     $val = $app->request->params('val');
-    echo Security::decrypt($val);
+    $hashids = new Hashids('', 20);
+    $decode = $hashids->decode($val);
+    if(count($decode) > 0){
+        echo $decode[0];
+    }else{
+        echo -1;
+    }
 });
 
 /**
  * Test encrypt method
  */
-$app->get('/test/encrypt', function() use($app){
-    include_once '../../include/Security.php';
+$app->get('/test/encrypt', function() use($app) {
     $val = $app->request->params('val');
-    echo Security::encrypt($val);
+    $hashids = new Hashids('', 20);
+    echo $hashids->encode($val);
 });
 
 /*
