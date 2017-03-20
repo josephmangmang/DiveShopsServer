@@ -323,6 +323,17 @@ $app->post('/shops/:shopUid/boats', function ($shopUid) use ($app) {
 });
 
 /**
+ * Get a list of boats
+ */
+$app->get('/shops/:shopUid/boats', function($shopUid) use ($app){
+    
+    $offset = $app->request->params('offset');
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->getBoats($shopUid, $offset);
+    echoResponse(200, $response);
+});
+
+/**
  * Verify required parameters before accessing it.
  * 
  */

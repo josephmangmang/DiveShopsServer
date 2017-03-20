@@ -66,7 +66,7 @@ class DatabaseHelper {
     const COLUMN_DIVER_ID = 'diver_id';
 
     private $hashids;
-    
+
     public function __construct() {
         require '../../include/DatabaseConnection.php';
         require_once '../../include/Config.php';
@@ -373,7 +373,7 @@ class DatabaseHelper {
 
     public function addBoat($diveShopUid, $name) {
         $decode = $this->hashids->decode($diveShopUid);
-        if(count($decode) < 1){
+        if (count($decode) < 1) {
             $response['error'] = true;
             $response['message'] = 'An error occured while adding Boat. Invalid dive_shop_id';
             return $response;
@@ -394,7 +394,47 @@ class DatabaseHelper {
         return $response;
     }
 
+    public function getBoats($shopUid, $offset = 0) {
+        $response = array('error' => true, 'message' => 'An error occured while getting list of boats.');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . ' Invalid dive_shop_id';
+            return $response;
+        }
+        if (is_int($offset)) {
+            $response['message'] = $response['message'] . ' Invalid offset';
+            return $response;
+        }
+        $stmt = $this->conn->prepare('SELECT ' .
+                self::COLUMN_BOAT_ID . ',' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_IMAGE .
+                ' FROM ' . self::TABLE_BOAT . ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? LIMIT ?, ?');
+        $maxRow = $offset + 10;
+        $stmt->bind_param('iii', $shopId[0], $offset, $maxRow);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $response['error'] = false;
+            $response['message'] = 'Success';
+            $response['boats'] = array();
+            while ($boat = $result->fetch_assoc()) {
+                $tmp = array();
+                $tmp['boat_id'] = $boat[self::COLUMN_BOAT_ID];
+                $tmp['dive_shop_id'] = $boat[self::COLUMN_DIVE_SHOP_ID];
+                $tmp['name'] = $boat[self::COLUMN_NAME];
+                $tmp['image'] = $boat[self::COLUMN_IMAGE];
+                array_push($response['boats'], $tmp);
+            }
+        } else {
+            $response['error'] = true;
+            $response['message'] = 'An error occured while getting list of boats';
+        }
+        $stmt->close();
+        return $response;
     }
+
+}
 
 class AccountType {
 
