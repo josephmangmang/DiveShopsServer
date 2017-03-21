@@ -42,7 +42,7 @@ $app->get('/test/encrypt', function() use($app) {
     echo $hashids->encode($val);
 });
 
-/*
+/* Done
  * Diver and Dive Shop registration
  * @param email, password, type
  */
@@ -56,7 +56,7 @@ $app->post('/register', function() use($app) {
     echoResponse(200, $response);
 });
 
-/*
+/* Done
  * Login user
  * @param email, password, type
  */
@@ -157,7 +157,7 @@ $app->get('/courses', function() use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Add new Course
  * Only DiveTym Admin can add new course
  */
@@ -173,7 +173,7 @@ $app->post('/courses', function() use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Update selected course
  */
 $app->put('/courses/:courseId', function($courseId) use($app) {
@@ -189,7 +189,7 @@ $app->put('/courses/:courseId', function($courseId) use($app) {
 });
 
 
-/**
+/** Done
  * Get a list of Dive Site base on location
  */
 $app->get('/sites', function() use($app) {
@@ -204,7 +204,7 @@ $app->get('/sites', function() use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Add new Dive Site
  */
 $app->post('/sites', function() use($app) {
@@ -221,7 +221,7 @@ $app->post('/sites', function() use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Update Dive Site
  */
 $app->put('/sites/:siteId', function($siteId) use($app) {
@@ -317,7 +317,7 @@ $app->get('/shops/:shopUid/trips', function($shopUid) use ($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Add new boat
  */
 $app->post('/shops/:shopUid/boats', function ($shopUid) use ($app) {
@@ -328,7 +328,7 @@ $app->post('/shops/:shopUid/boats', function ($shopUid) use ($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Get a list of boats
  */
 $app->get('/shops/:shopUid/boats', function($shopUid) use ($app) {
@@ -339,7 +339,7 @@ $app->get('/shops/:shopUid/boats', function($shopUid) use ($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Update boat
  */
 $app->put('/boats/:boatId', function($boatId) use ($app) {
@@ -349,7 +349,7 @@ $app->put('/boats/:boatId', function($boatId) use ($app) {
     $response = $databaseHelper->updateBoat($boatId, $name);
     echoResponse(200, $response);
 });
-/**
+/** Done
  * Delete boat
  */
 $app->delete('/boats/:boatId', function($boatId) use ($app) {
