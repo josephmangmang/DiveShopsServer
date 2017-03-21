@@ -514,9 +514,8 @@ class DatabaseHelper {
             );
         } else {
             $response['error'] = true;
-            $response['message'] = 'An error occured while adding Boat. ';
+            $response['message'] = 'An error occured while adding Boat. ' . $stmt->error;
             $response['shop_id'] = $diveShopUid;
-            $response['details'] = $stmt->error;
         }
         return $response;
     }
