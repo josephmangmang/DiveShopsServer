@@ -224,14 +224,16 @@ $app->post('/sites', function() use($app) {
  * Update Dive Site
  */
 $app->put('/sites/:siteId', function($siteId) use($app) {
-    $requiredParams = array('name', 'description', 'location');
+    $requiredParams = array('name', 'description', 'address', 'latitude', 'longitude');
     verifyRequiredParams($requiredParams);
     $name = $app->request->put($requiredParams[0]);
     $description = $app->request->put($requiredParams[1]);
-    $location = $app->request->put($requiredParams[2]);
+    $address = $app->request->put($requiredParams[2]);
+    $latitude = $app->request->put($requiredParams[3]);
+    $longitude = $app->request->put($requiredParams[4]);
 
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateDiveSite($siteId, $name, $description, $location);
+    $response = $databaseHelper->updateDiveSite($siteId, $name, $description, $address, $latitude, $longitude);
     echoResponse(200, $response);
 });
 

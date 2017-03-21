@@ -368,8 +368,33 @@ class DatabaseHelper {
         return $response;
     }
 
-    public function updateDiveSite($siteId, $name, $description, $location) {
-        
+    public function updateDiveSite($siteId, $name, $description, $address, $latitude, $longitude) {
+        $response = array('error' => true, 'message' => 'An error occured while updating Dive Site. ');
+        $stmt = $this->conn->prepare('UPDATE ' .
+                self::TABLE_DIVE_SITE . ' SET ' .
+                self::COLUMN_NAME . '=?,' .
+                self::COLUMN_DESCRIPTION . '=?,' .
+                self::COLUMN_ADDRESS . '=?,' .
+                self::COLUMN_LATITUDE . '=?,' .
+                self::COLUMN_LONGTITUDE . '=? WHERE ' .
+                self::COLUMN_DIVE_SITE_ID . '=?');
+        $stmt->bind_param('sssddi', $name, $description, $address, $latitude, $longitude, $siteId);
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = 'Dive site successfully updated';
+            $response['dive_site'] = array(
+                self::COLUMN_DIVE_SITE_ID => $siteId,
+                self::COLUMN_NAME => $name,
+                self::COLUMN_DESCRIPTION => $description,
+                self::COLUMN_ADDRESS => $address,
+                self::COLUMN_LATITUDE => $latitude,
+                self::COLUMN_LONGTITUDE => $longitude
+            );
+        } else {
+            $response['message'] = $response['message'] . $stmt->error;
+        }
+        $stmt->close();
+        return $response;
     }
 
     public function getDiveShops($location, $offset, $sort, $order) {
