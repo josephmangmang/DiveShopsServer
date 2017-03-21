@@ -188,6 +188,7 @@ class DatabaseHelper {
                 $response['message'] = "Email or password does't match";
             }
         }
+        $stmt->close();
         return $response;
     }
 
@@ -306,6 +307,7 @@ class DatabaseHelper {
         } else {
             $response['message'] = $response['message'] . $stmt->error;
         }
+        $stmt->close();
         return $response;
     }
 
@@ -328,6 +330,7 @@ class DatabaseHelper {
         } else {
             $response['message'] = $response['message'] . $stmt->error;
         }
+        $stmt->close();
         return $response;
     }
 
