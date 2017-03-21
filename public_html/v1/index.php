@@ -193,13 +193,14 @@ $app->put('/courses/:courseId', function($courseId) use($app) {
  * Get a list of Dive Site base on location
  */
 $app->get('/sites', function() use($app) {
-    $requiredParams = array('location', 'offset');
-    verifyRequiredParams($requiredParams);
-    $location = $app->request->params($requiredParams[0]);
-    $offset = $app->request->params($requiredParams[1]);
+    verifyRequiredParams(array('lat', 'lng'));
+    $lat = $app->request->params('lat');
+    $lng = $app->request->params('lng');
+    $radius = $app->request->params('radius');
+    $offset = $app->request->params('offset');
 
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveSite($location, $offset);
+    $response = $databaseHelper->getDiveSite($lat, $lng, $radius, $offset);
     echoResponse(200, $response);
 });
 
@@ -214,7 +215,7 @@ $app->post('/sites', function() use($app) {
     $address = $app->request->params($requiredParams[2]);
     $latitude = $app->request->params($requiredParams[3]);
     $longitude = $app->request->params($requiredParams[4]);
-    
+
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->addDiveSite($name, $description, $address, $latitude, $longitude);
     echoResponse(200, $response);

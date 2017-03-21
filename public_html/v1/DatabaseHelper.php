@@ -334,8 +334,41 @@ class DatabaseHelper {
         return $response;
     }
 
-    public function getDiveSite($location, $offset) {
-        
+    public function getDiveSite($lat, $lng, $radius = 25, $offset = 0) {
+        $response = array('error' => true, 'message' => 'An error occured while getting list of Dive Site. ');
+        if (is_int($offset)) {
+            $response['message'] = $response['message'] . ' Invalid offset';
+            return $response;
+        }
+        $query = 'SELECT ' .
+                self::COLUMN_DIVE_SITE_ID . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_ADDRESS . ',' .
+                self::COLUMN_LATITUDE . ',' .
+                self::COLUMN_LONGTITUDE .
+                ', ( 3959 * acos( cos( radians(?) ) * cos( radians( ' .
+                self::COLUMN_LATITUDE . ' ) ) * cos( radians( ' .
+                self::COLUMN_LONGTITUDE . ' ) - radians(?) ) + sin( radians(?) ) * sin( radians( ' .
+                self::COLUMN_LATITUDE . ' ) ) ) ) AS distance FROM ' .
+                self::TABLE_DIVE_SITE . ' HAVING distance < ? ORDER BY distance LIMIT ? , ?';
+
+        $stmt = $this->conn->prepare($query);
+        $maxRows = $offset + 10;
+        $stmt->bind_param('dddiii', $lat, $lng, $lat, $radius, $offset, $maxRows);
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = 'Success';
+            $response['dive_sites'] = array();
+            $result = $stmt->get_result();
+            while ($site = $result->fetch_assoc()) {
+                array_push($response['dive_sites'], $site);
+            }
+        } else {
+            $response['message'] = $response['message'] . $stmt->error;
+        }
+        $stmt->close();
+        return $response;
     }
 
     public function addDiveSite($name, $description, $address, $latitude, $longitude) {
