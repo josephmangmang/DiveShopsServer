@@ -568,11 +568,24 @@ class DatabaseHelper {
                 self::COLUMN_BOAT_ID . '=?');
         $stmt->bind_param('si', $name, $boatId);
         if ($stmt->execute()) {
+            $stmt->close();
             $response['error'] = false;
             $response['message'] = 'Success';
+            $stmt = $this->conn->prepare('SELECT ' .
+                    self::COLUMN_BOAT_ID . ',' .
+                    self::COLUMN_DIVE_SHOP_ID . ',' .
+                    self::COLUMN_NAME . ',' .
+                    self::COLUMN_IMAGE . ' FROM ' . self::TABLE_BOAT .
+                    ' WHERE ' . self::COLUMN_BOAT_ID . '=?');
+            $stmt->bind_param('i', $boatId);
+            if ($stmt->execute()) {
+                $result = $stmt->get_result();
+                $response['boat'] = $result->fetch_assoc();
+            }
         } else {
             $response['message'] = $response['message'] . $stmt->error;
         }
+        $stmt->close();
         return $response;
     }
 
