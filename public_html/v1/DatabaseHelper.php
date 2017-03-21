@@ -506,6 +506,12 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = $name . ' successfully added';
+            $response['boat'] = array(
+                self::COLUMN_BOAT_ID => $stmt->insert_id,
+                self::COLUMN_DIVE_SHOP_ID => $diveShopUid,
+                self::COLUMN_NAME => $name,
+                self::COLUMN_IMAGE => ""
+            );
         } else {
             $response['error'] = true;
             $response['message'] = 'An error occured while adding Boat. ';
