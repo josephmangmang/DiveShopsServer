@@ -595,7 +595,7 @@ class DatabaseHelper {
         $stmt->bind_param('i', $boatId);
         if ($stmt->execute()) {
             $response['error'] = false;
-            $response['message'] = 'Success';
+            $response['message'] = 'Successfully deleted';
             if ($stmt->affected_rows < 1) {
                 $response['error'] = true;
                 $response['message'] = "Boat doesn't exist";
