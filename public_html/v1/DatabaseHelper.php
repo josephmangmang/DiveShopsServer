@@ -325,7 +325,7 @@ class DatabaseHelper {
             $response['message'] = "$name successfully updated.";
             if ($stmt->affected_rows < 1) {
                 $response['error'] = true;
-                $response['message'] = "$name doesn't exist.";
+                $response['message'] = "Course doesn't exist.";
             }
         } else {
             $response['message'] = $response['message'] . $stmt->error;
