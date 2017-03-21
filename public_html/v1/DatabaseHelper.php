@@ -348,11 +348,20 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = "$name successfully added";
+            $response['dive_site'] = array(
+                self::COLUMN_DIVE_SITE_ID => $stmt->insert_id,
+                self::COLUMN_NAME => $name,
+                self::COLUMN_DESCRIPTION => $description,
+                self::COLUMN_ADDRESS => $address,
+                self::COLUMN_LATITUDE => $latitude,
+                self::COLUMN_LONGTITUDE => $longitude
+            );
         } else if (strpos($stmt->error, "Duplicate") !== false) {
             $response['message'] = "$name already exist";
         } else {
             $response['message'] = $response['message'] . $stmt->error;
         }
+        $stmt->close();
         return $response;
     }
 
