@@ -151,7 +151,7 @@ $app->get('/courses', function() use($app) {
     $offset = $app->request->params($requiredParams[0]);
     $sort = $app->request->params($requiredParams[1]);
     $order = $app->request->params($requiredParams[2]);
-
+    
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getCourses($offset, $order, $sort);
     echoResponse(200, $response);
@@ -200,6 +200,9 @@ $app->get('/sites', function() use($app) {
     $offset = $app->request->params('offset');
     if (!isset($offset) || strlen($offset) <= 0) {
         $offset = '0';
+    }
+    if (!isset($radius) || strlen($radius)) {
+        $radius = 25;
     }
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getDiveSite($lat, $lng, $radius, $offset);
@@ -252,6 +255,9 @@ $app->get('/diveshops', function() use($app) {
     if (!isset($offset) || strlen($offset) <= 0) {
         $offset = '0';
     }
+    if (!isset($radius) || strlen($radius)) {
+        $radius = 25;
+    }
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getDiveShops($lat, $lng, $radius, $offset);
     echoResponse(200, $response);
@@ -271,10 +277,18 @@ $app->get('/diveshops/:shopUid', function($shopUid) {
  */
 $app->get('/diveshops/:shopUid/courses', function($shopUid) use ($app) {
     $requiredParams = array('offset', 'sort', 'order');
-    verifyRequiredParams($requiredParams);
     $offset = $app->request->params($requiredParams[0]);
     $sort = $app->request->params($requiredParams[1]);
     $order = $app->request->params($requiredParams[2]);
+    if (!isset($offset) || strlen($offset) < 1) {
+        $offset = '0';
+    }
+    if (!isset($sort) || strlen($sort) < 1) {
+        $sort = 'ASC';
+    }
+    if (!isset($order) || strlen($order)) {
+        $order = 'name';
+    }
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getDiveShopCourses($shopUid, $offset, $order, $sort);
     echoResponse(200, $response);
