@@ -257,7 +257,7 @@ $app->get('/diveshops', function() use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Get dive shop informations
  */
 $app->get('/diveshops/:shopUid', function($shopUid) {
@@ -266,7 +266,7 @@ $app->get('/diveshops/:shopUid', function($shopUid) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Get dive shop courses
  */
 $app->get('/diveshops/:shopUid/courses', function($shopUid) use ($app) {
@@ -276,7 +276,7 @@ $app->get('/diveshops/:shopUid/courses', function($shopUid) use ($app) {
     $sort = $app->request->params($requiredParams[1]);
     $order = $app->request->params($requiredParams[2]);
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveShopCourses($shopUid, $offset, $sort, $order);
+    $response = $databaseHelper->getDiveShopCourses($shopUid, $offset, $order, $sort);
     echoResponse(200, $response);
 });
 

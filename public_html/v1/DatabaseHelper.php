@@ -505,11 +505,140 @@ class DatabaseHelper {
     }
 
     public function getDiveShop($shopUid) {
-        
+        $response = array('error' => true, 'message' => 'An error occured while getting Dive Shop. ');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
+            return $response;
+        }
+        $query = 'SELECT ' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_CONTACT_NUMBER . ',' .
+                self::COLUMN_ADDRESS . ',' .
+                self::COLUMN_PRICE_PER_DIVE . ',' .
+                self::COLUMN_LATITUDE . ',' .
+                self::COLUMN_LONGTITUDE . ',' .
+                self::COLUMN_SPECIAL_SERVICE .
+                ' FROM ' . self::TABLE_DIVE_SHOP .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=?';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('i', $shopId[0]);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $response['dive_shop'] = $result->fetch_assoc();
+            $response['dive_shop']['courses'] = $this->getDiveShopCoursesList($shopId[0]);
+            $response['dive_shop']['boats'] = $this->getDiveShopBoats($shopId[0]);
+        }
+        $stmt->close();
+        return $response;
     }
 
-    public function getDiveShopCourses($shopUid, $offset, $sort, $order) {
-        
+    /**
+     * 
+     * @param type $shopId
+     * @param type $offset
+     * @param type $orderBy
+     * @param type $sort
+     * @return array Boats else return string error message
+     */
+    private function getDiveShopBoats($shopId, $offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
+        $response = array();
+        $stmt = $this->conn->prepare('SELECT ' .
+                self::COLUMN_BOAT_ID . ',' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_IMAGE .
+                ' FROM ' . self::TABLE_BOAT .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=?' .
+                " ORDER BY $orderBy $sort LIMIT ?, ?");
+        $maxRow = $offset + 10;
+        $stmt->bind_param('iii', $shopId, $offset, $maxRow);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            while ($boat = $result->fetch_assoc()) {
+                array_push($response, $boat);
+            }
+        } else {
+            return $stmt->error;
+        }
+        $stmt->close();
+        return $response;
+    }
+
+    /**
+     * 
+     * @param type $shopId
+     * @param type $offset
+     * @param type $orderBy
+     * @param type $sort
+     * @return array Course else string error message
+     */
+    private function getDiveShopCoursesList($shopId, $offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
+        $response = array();
+        $query = 'SELECT ' .
+                self::COLUMN_DIVE_SHOP_COURSE_ID . ',' .
+                self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_COURSE_ID . ',' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_PRICE . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_PHOTO_COVER . ',' .
+                self::COLUMN_OFFERED_BY .
+                ' FROM ' . self::TABLE_DIVE_SHOP_COURSE .
+                ' INNER JOIN ' . self::TABLE_COURSE . ' ON ' .
+                self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_COURSE_ID . '=' . self::TABLE_COURSE . '.' . self::COLUMN_COURSE_ID .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=?' .
+                " ORDER BY $orderBy $sort LIMIT ?,?";
+        $stmt = $this->conn->prepare($query);
+        $maxRows = $offset + 10;
+        $stmt->bind_param('iii', $shopId, $offset, $maxRows);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            while ($course = $result->fetch_assoc()) {
+                array_push($response, $course);
+            }
+        } else {
+            return $stmt->error;
+        }
+        $stmt->close();
+        return $response;
+    }
+
+    /**
+     * 
+     * @param type $shopUid
+     * @param type $offset
+     * @param type $orderBy
+     * @param string $sort
+     * @return string
+     */
+    public function getDiveShopCourses($shopUid, $offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
+        $response = array('error' => true, 'message' => 'An error occured while getting Course list. ');
+        switch ($sort) {
+            case 'asc': case 'ASC' : case 'desc' : case 'DESC':
+                break;
+            default : $sort = 'ASC';
+                break;
+        }
+        if ($orderBy !== self::COLUMN_NAME && $orderBy !== self::COLUMN_OFFERED_BY) {
+            $response['message'] = $response['message'] . 'Only order by name or offered_by is allowed.';
+            return $response;
+        }
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
+            return $response;
+        }
+        $response['courses'] = $this->getDiveShopCoursesList($shopId[0], $offset, $orderBy, $sort);
+        if (is_array($response['courses'])) {
+            $response['error'] = false;
+            $response['message'] = 'Success';
+        } else {
+            $response['message'] = $response['message'] . $response['courses'];
+        }
+        return $response;
     }
 
     public function updateDiveShopCourse($shopUid, $shopCourseId, $price) {
@@ -601,32 +730,13 @@ class DatabaseHelper {
             $response['message'] = $response['message'] . ' Invalid offset "' . $offset . '"';
             return $response;
         }
-        $stmt = $this->conn->prepare('SELECT ' .
-                self::COLUMN_BOAT_ID . ',' .
-                self::COLUMN_DIVE_SHOP_ID . ',' .
-                self::COLUMN_NAME . ',' .
-                self::COLUMN_IMAGE .
-                ' FROM ' . self::TABLE_BOAT . ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? LIMIT ?, ?');
-        $maxRow = $offset + 10;
-        $stmt->bind_param('iii', $shopId[0], $offset, $maxRow);
-        if ($stmt->execute()) {
-            $result = $stmt->get_result();
+        $response['boats'] = $this->getDiveShopBoats($shopId[0], $offset);
+        if (is_array($response['boats'])) {
             $response['error'] = false;
             $response['message'] = 'Success';
-            $response['boats'] = array();
-            while ($boat = $result->fetch_assoc()) {
-                $tmp = array();
-                $tmp['boat_id'] = $boat[self::COLUMN_BOAT_ID];
-                $tmp['dive_shop_id'] = $boat[self::COLUMN_DIVE_SHOP_ID];
-                $tmp['name'] = $boat[self::COLUMN_NAME];
-                $tmp['image'] = $boat[self::COLUMN_IMAGE];
-                array_push($response['boats'], $tmp);
-            }
         } else {
-            $response['error'] = true;
-            $response['message'] = 'An error occured while getting list of boats';
+            $response['message'] = $response['message'] . $response['boats'];
         }
-        $stmt->close();
         return $response;
     }
 
