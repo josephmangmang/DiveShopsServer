@@ -808,7 +808,7 @@ class DatabaseHelper {
     }
 
     public function addDiveShopCourse($shopUid, $courseId, $price) {
-        $response = array('error' => true, 'message' => 'An error while adding Dive Shop Course. ');
+        $response = array('error' => true, 'message' => 'An error occured while adding Dive Shop Course. ');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
             $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
