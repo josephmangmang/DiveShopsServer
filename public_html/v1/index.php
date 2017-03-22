@@ -294,7 +294,7 @@ $app->get('/diveshops/:shopUid/courses', function($shopUid) use ($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Update Dive Shop course
  */
 $app->put('/diveshops/:shopUid/courses/:shopCourseId', function($shopUid, $shopCourseId) use($app) {

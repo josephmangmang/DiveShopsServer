@@ -642,7 +642,28 @@ class DatabaseHelper {
     }
 
     public function updateDiveShopCourse($shopUid, $shopCourseId, $price) {
-        
+        $response = array('error' => true, 'message' => 'An error occured while updating Dive Shop Course. ');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid Dive Shop id';
+            return $response;
+        }
+        $stmt = $this->conn->prepare(
+                'UPDATE ' . self::TABLE_DIVE_SHOP_COURSE . ' SET ' .
+                self::COLUMN_PRICE . '=? WHERE ' .
+                self::COLUMN_DIVE_SHOP_COURSE_ID . '=? AND ' .
+                self::COLUMN_DIVE_SHOP_ID . '=?');
+        $stmt->bind_param('dii', $price, $shopCourseId, $shopId[0]);
+        if($stmt->execute()){
+            $response['error'] = true;
+            if($stmt->affected_rows < 1){
+                $response['message'] = 'Nothing is changed';
+            }else{
+                $response['message'] = 'Successfully updated';
+            }
+        }
+        $stmt->close();
+        return $response;
     }
 
     /**
