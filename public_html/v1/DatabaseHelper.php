@@ -494,6 +494,7 @@ class DatabaseHelper {
             $response['dive_shops'] = array();
             $result = $stmt->get_result();
             while ($site = $result->fetch_assoc()) {
+                $site[self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($site[self::COLUMN_DIVE_SHOP_ID]);
                 array_push($response['dive_shops'], $site);
             }
         } else {

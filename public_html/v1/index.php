@@ -240,7 +240,7 @@ $app->put('/sites/:siteId', function($siteId) use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Get a list of Dive Shop
  */
 $app->get('/diveshops', function() use($app) {
