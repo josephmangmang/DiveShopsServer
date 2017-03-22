@@ -288,8 +288,42 @@ class DatabaseHelper {
         // Todo ... update daily_trip table, daily_trip_guide table and daily_trip_dive_site table
     }
 
-    public function getCourses($offset, $sort, $order) {
-        
+    public function getCourses($offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
+        $response = array('error' => true, 'message' => 'An error occured while getting Course list. ');
+        switch ($sort) {
+            case 'asc': case 'ASC' : case 'desc' : case 'DESC':
+                break;
+            default : $sort = 'ASC';
+                break;
+        }
+        if($orderBy !== self::COLUMN_NAME && $orderBy !== self::COLUMN_OFFERED_BY){
+            $response['message'] = $response['message'] . 'Only order by name or offered_by is allowed.';
+            return $response;
+        }
+        $query = 'SELECT ' .
+                self::COLUMN_COURSE_ID . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_PHOTO_COVER . ',' .
+                self::COLUMN_OFFERED_BY .
+                ' FROM ' . self::TABLE_COURSE .
+                " ORDER BY $orderBy $sort LIMIT ?,?";
+        $stmt = $this->conn->prepare($query);
+        $maxRows = $offset + 10;
+        $stmt->bind_param('ii', $offset, $maxRows);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $response['error'] = false;
+            $response['message'] = 'Success';
+            $response['courses'] = array();
+            while ($course = $result->fetch_assoc()) {
+                array_push($response['courses'], $course);
+            }
+        }else{
+            $response['message'] = $response['message'] . $stmt->error;
+        }
+        $stmt->close();
+        return $response;
     }
 
     public function addCourse($name, $description = '', $offeredBy = '') {
