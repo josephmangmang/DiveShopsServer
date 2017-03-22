@@ -241,7 +241,7 @@ $app->put('/sites/:siteId', function($siteId) use($app) {
 /**
  * Get a list of Dive Shop
  */
-$app->get('/shops', function() use($app) {
+$app->get('/diveshops', function() use($app) {
     $requiredParams = array('location', 'offset', 'sort', 'order');
     verifyRequiredParams($requiredParams);
     $location = $app->request->params($requiredParams[0]);
@@ -257,7 +257,7 @@ $app->get('/shops', function() use($app) {
 /**
  * Get dive shop informations
  */
-$app->get('/shops/:shopUid', function($shopUid) {
+$app->get('/diveshops/:shopUid', function($shopUid) {
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getDiveShop($shopUid);
     echoResponse(200, $response);
@@ -266,7 +266,7 @@ $app->get('/shops/:shopUid', function($shopUid) {
 /**
  * Get dive shop courses
  */
-$app->get('/shops/:shopUid/courses', function($shopUid) use ($app) {
+$app->get('/diveshops/:shopUid/courses', function($shopUid) use ($app) {
     $requiredParams = array('offset', 'sort', 'order');
     verifyRequiredParams($requiredParams);
     $offset = $app->request->params($requiredParams[0]);
@@ -280,7 +280,7 @@ $app->get('/shops/:shopUid/courses', function($shopUid) use ($app) {
 /**
  * Update Dive Shop course
  */
-$app->put('/shops/:shopUid/courses/:shopCourseId', function($shopUid, $shopCourseId) use($app) {
+$app->put('/diveshops/:shopUid/courses/:shopCourseId', function($shopUid, $shopCourseId) use($app) {
     $requiredParams = array('price');
     verifyRequiredParams($requiredParams);
     $price = $app->request->put($requiredParams[0]);
@@ -291,7 +291,7 @@ $app->put('/shops/:shopUid/courses/:shopCourseId', function($shopUid, $shopCours
 /**
  * Add course on dive shop
  */
-$app->post('/shops/:shopUid/courses', function($shopUid) use($app) {
+$app->post('/diveshops/:shopUid/courses', function($shopUid) use($app) {
     $requiredParams = array('course_id', 'price');
     verifyRequiredParams($requiredParams);
     $courseId = $app->request->params($requiredParams[0]);
@@ -304,7 +304,7 @@ $app->post('/shops/:shopUid/courses', function($shopUid) use($app) {
 /**
  * Get list of Dive Shop Dive Trips
  */
-$app->get('/shops/:shopUid/trips', function($shopUid) use ($app) {
+$app->get('/diveshops/:shopUid/trips', function($shopUid) use ($app) {
     $requiredParams = array('start_date', 'end_date', 'offset', 'sort', 'order');
     verifyRequiredParams($requiredParams);
     $startDate = $app->request->params($requiredParams[0]);
@@ -320,7 +320,7 @@ $app->get('/shops/:shopUid/trips', function($shopUid) use ($app) {
 /** Done
  * Add new boat
  */
-$app->post('/shops/:shopUid/boats', function ($shopUid) use ($app) {
+$app->post('/diveshops/:shopUid/boats', function ($shopUid) use ($app) {
     verifyRequiredParams(array('name'));
     $name = $app->request->params('name');
     $databaseHelper = new DatabaseHelper();
@@ -331,7 +331,7 @@ $app->post('/shops/:shopUid/boats', function ($shopUid) use ($app) {
 /** Done
  * Get a list of boats
  */
-$app->get('/shops/:shopUid/boats', function($shopUid) use ($app) {
+$app->get('/diveshops/:shopUid/boats', function($shopUid) use ($app) {
 
     $offset = $app->request->params('offset');
     $databaseHelper = new DatabaseHelper();
