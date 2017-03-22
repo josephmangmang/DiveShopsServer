@@ -151,7 +151,7 @@ $app->get('/courses', function() use($app) {
     $offset = $app->request->params($requiredParams[0]);
     $sort = $app->request->params($requiredParams[1]);
     $order = $app->request->params($requiredParams[2]);
-    
+
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getCourses($offset, $order, $sort);
     echoResponse(200, $response);
