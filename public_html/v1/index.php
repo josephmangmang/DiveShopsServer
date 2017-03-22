@@ -198,7 +198,9 @@ $app->get('/sites', function() use($app) {
     $lng = $app->request->params('lng');
     $radius = $app->request->params('radius');
     $offset = $app->request->params('offset');
-
+    if (!isset($offset) || strlen($offset) <= 0) {
+        $offset = '0';
+    }
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getDiveSite($lat, $lng, $radius, $offset);
     echoResponse(200, $response);
@@ -242,15 +244,16 @@ $app->put('/sites/:siteId', function($siteId) use($app) {
  * Get a list of Dive Shop
  */
 $app->get('/diveshops', function() use($app) {
-    $requiredParams = array('location', 'offset', 'sort', 'order');
-    verifyRequiredParams($requiredParams);
-    $location = $app->request->params($requiredParams[0]);
-    $offset = $app->request->params($requiredParams[1]);
-    $sort = $app->request->params($requiredParams[2]);
-    $order = $app->request->params($requiredParams[3]);
-
+    verifyRequiredParams(array('lat', 'lng'));
+    $lat = $app->request->params('lat');
+    $lng = $app->request->params('lng');
+    $radius = $app->request->params('radius');
+    $offset = $app->request->params('offset');
+    if (!isset($offset) || strlen($offset) <= 0) {
+        $offset = '0';
+    }
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveShops($location, $offset, $sort, $order);
+    $response = $databaseHelper->getDiveShops($lat, $lng, $radius, $offset);
     echoResponse(200, $response);
 });
 
@@ -334,6 +337,9 @@ $app->post('/diveshops/:shopUid/boats', function ($shopUid) use ($app) {
 $app->get('/diveshops/:shopUid/boats', function($shopUid) use ($app) {
 
     $offset = $app->request->params('offset');
+    if (!isset($offset) || strlen($offset) <= 0) {
+        $offset = '0';
+    }
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getBoats($shopUid, $offset);
     echoResponse(200, $response);

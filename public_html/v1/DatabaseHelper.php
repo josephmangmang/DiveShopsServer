@@ -296,7 +296,7 @@ class DatabaseHelper {
             default : $sort = 'ASC';
                 break;
         }
-        if($orderBy !== self::COLUMN_NAME && $orderBy !== self::COLUMN_OFFERED_BY){
+        if ($orderBy !== self::COLUMN_NAME && $orderBy !== self::COLUMN_OFFERED_BY) {
             $response['message'] = $response['message'] . 'Only order by name or offered_by is allowed.';
             return $response;
         }
@@ -319,7 +319,7 @@ class DatabaseHelper {
             while ($course = $result->fetch_assoc()) {
                 array_push($response['courses'], $course);
             }
-        }else{
+        } else {
             $response['message'] = $response['message'] . $stmt->error;
         }
         $stmt->close();
@@ -368,10 +368,10 @@ class DatabaseHelper {
         return $response;
     }
 
-    public function getDiveSite($lat, $lng, $radius = 25, $offset = 0) {
+    public function getDiveSite($lat, $lng, $radius = 25, $offset = '0') {
         $response = array('error' => true, 'message' => 'An error occured while getting list of Dive Site. ');
-        if (is_int($offset)) {
-            $response['message'] = $response['message'] . ' Invalid offset';
+        if (!ctype_digit($offset)) {
+            $response['message'] = $response['message'] . ' Invalid offset "' . $offset . '"';
             return $response;
         }
         $query = 'SELECT ' .
@@ -464,8 +464,43 @@ class DatabaseHelper {
         return $response;
     }
 
-    public function getDiveShops($location, $offset, $sort, $order) {
-        
+    public function getDiveShops($lat, $lng, $radius, $offset) {
+        $response = array('error' => true, 'message' => 'An error occured while getting list of Dive Site. ');
+        if (!ctype_digit($offset)) {
+            $response['message'] = $response['message'] . ' Invalid offset "' . $offset . '"';
+            return $response;
+        }
+        $query = 'SELECT ' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_CONTACT_NUMBER . ',' .
+                self::COLUMN_ADDRESS . ',' .
+                self::COLUMN_PRICE_PER_DIVE . ',' .
+                self::COLUMN_LATITUDE . ',' .
+                self::COLUMN_LONGTITUDE . ',' .
+                self::COLUMN_SPECIAL_SERVICE .
+                ', ( 3959 * acos( cos( radians(?) ) * cos( radians( ' .
+                self::COLUMN_LATITUDE . ' ) ) * cos( radians( ' .
+                self::COLUMN_LONGTITUDE . ' ) - radians(?) ) + sin( radians(?) ) * sin( radians( ' .
+                self::COLUMN_LATITUDE . ' ) ) ) ) AS distance FROM ' .
+                self::TABLE_DIVE_SHOP . ' HAVING distance < ? ORDER BY distance LIMIT ? , ?';
+        $stmt = $this->conn->prepare($query);
+        $maxRows = $offset + 10;
+        $stmt->bind_param('dddiii', $lat, $lng, $lat, $radius, $offset, $maxRows);
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = 'Success';
+            $response['dive_shops'] = array();
+            $result = $stmt->get_result();
+            while ($site = $result->fetch_assoc()) {
+                array_push($response['dive_shops'], $site);
+            }
+        } else {
+            $response['message'] = $response['message'] . $stmt->error;
+        }
+        $stmt->close();
+        return $response;
     }
 
     public function getDiveShop($shopUid) {
@@ -554,15 +589,15 @@ class DatabaseHelper {
         return $response;
     }
 
-    public function getBoats($shopUid, $offset = 0) {
+    public function getBoats($shopUid, $offset = '0') {
         $response = array('error' => true, 'message' => 'An error occured while getting list of boats.');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
             $response['message'] = $response['message'] . ' Invalid dive_shop_id';
             return $response;
         }
-        if (is_int($offset)) {
-            $response['message'] = $response['message'] . ' Invalid offset';
+        if (!ctype_digit($offset)) {
+            $response['message'] = $response['message'] . ' Invalid offset "' . $offset . '"';
             return $response;
         }
         $stmt = $this->conn->prepare('SELECT ' .
