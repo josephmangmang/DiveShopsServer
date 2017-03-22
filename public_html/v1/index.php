@@ -140,7 +140,7 @@ $app->put('/trips/:tripId', function($tripId) use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Get a list of Course
  * sort by price/rating
  * order by ASC/DESC
@@ -153,7 +153,7 @@ $app->get('/courses', function() use($app) {
     $order = $app->request->params($requiredParams[2]);
 
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getCourses($offset, $sort, $order);
+    $response = $databaseHelper->getCourses($offset, $order, $sort);
     echoResponse(200, $response);
 });
 
