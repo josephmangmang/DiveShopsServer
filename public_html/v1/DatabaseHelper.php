@@ -786,6 +786,48 @@ class DatabaseHelper {
         return $response;
     }
 
+    public function addDiveShopCourse($shopUid, $courseId, $price) {
+        $response = array('error' => true, 'message' => 'An error while adding Dive Shop Course. ');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
+            return $response;
+        }
+        $query = 'INSERT INTO ' .
+                self::TABLE_DIVE_SHOP_COURSE . '(' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_COURSE_ID . ',' .
+                self::COLUMN_PRICE . ')' .
+                ' VALUES (?,?,?)';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('iid', $shopId[0], $courseId, $price);
+        if ($stmt->execute()) {
+            $diveShopCourseId = $stmt->insert_id;
+            $stmt->close();
+            $response['error'] = false;
+            $response['message'] = "Successfully added";
+            $response['course'] = array();
+            $stmt = $this->conn->prepare('SELECT ' .
+                    self::COLUMN_COURSE_ID . ',' .
+                    self::COLUMN_NAME . ',' .
+                    self::COLUMN_DESCRIPTION . ',' .
+                    self::COLUMN_PHOTO_COVER . ',' .
+                    self::COLUMN_OFFERED_BY .
+                    ' FROM ' . self::TABLE_COURSE . ' WHERE ' . self::COLUMN_COURSE_ID . '=?');
+            $stmt->bind_param('i', $courseId);
+            if ($stmt->execute()) {
+                $result = $stmt->get_result();
+                $response['course'] = $result->fetch_assoc();
+            }
+            $response['course'][self::COLUMN_DIVE_SHOP_COURSE_ID] = $diveShopCourseId;
+        } else if (strpos($stmt->error, 'Duplicate') !== false) {
+            $response['message'] = $response['message'] . 'Course already exist.';
+        } else {
+            $response['message'] = $response['message'] . 'Course does not exist';
+        }
+        return $response;
+    }
+
 }
 
 class AccountType {

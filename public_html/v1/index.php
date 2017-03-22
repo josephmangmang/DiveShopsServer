@@ -305,7 +305,7 @@ $app->put('/diveshops/:shopUid/courses/:shopCourseId', function($shopUid, $shopC
     $response = $databaseHelper->updateDiveShopCourse($shopUid, $shopCourseId, $price);
     echoResponse(200, $response);
 });
-/**
+/** Done
  * Add course on dive shop
  */
 $app->post('/diveshops/:shopUid/courses', function($shopUid) use($app) {
