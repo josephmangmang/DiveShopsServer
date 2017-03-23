@@ -66,6 +66,7 @@ class DatabaseHelper {
     const COLUMN_DIVER_ID = 'diver_id';
     const COLUMN_LATITUDE = 'latitude';
     const COLUMN_LONGTITUDE = 'longitude';
+    const COLUMN_DAILY_TRIP_GUIDE_ID = 'daily_trip_guide_id';
 
     private $hashids;
 
@@ -201,18 +202,97 @@ class DatabaseHelper {
      * @param price, 
      * @param price_note
      */
-    public function addDiveTrip($shopId, $groupSize, $numberOfDives, $date, $price, $priceNote) {
-        $response = array();
-        $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP . '(dive_shop_id, group_size, number_of_dive, date, price, price_note) VALUES(' . self::DECRYPT_UID_QUERY . ',?,?,?,?,?)';
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param('siiids', $shopId, $groupSize, $numberOfDives, $date, $price, $priceNote);
-        if ($stmt->execute()) {
-            $response['error'] = false;
-            $response['message'] = 'New dive trip successfully created';
-        } else {
-            $response['error'] = true;
-            $response['message'] = 'Cannot add dive trip. ' . $stmt->error;
+    public function addDiveTrip($shopUid, $tripJson) {
+        $response = array('error' => true, 'message' => 'An error while adding Dive Trip. ');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
+            return;
         }
+        $tripData = json_decode($tripJson, true);
+        if (is_null($tripData)) {
+            $response['message'] = $response['message'] . 'Invalid Dive Trip data.';
+            return $response;
+        }
+        $checkFields = $this->requiredParams($tripData, array(
+            self::COLUMN_NUMBER_OF_DIVE, self::COLUMN_GROUP_SIZE, self::COLUMN_DATE,
+            self::COLUMN_PRICE, self::COLUMN_PRICE_NOTE, self::TABLE_DAILY_TRIP_DIVE_SITE,
+            self::TABLE_DAILY_TRIP_GUIDE, self::TABLE_DAILY_TRIP_GUEST, self::TABLE_DAILY_TRIP_BOAT
+        ));
+        if ($checkFields['error']) {
+            $response['message'] = $response['message'] . $checkFields['message'];
+            return $response;
+        }
+        $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP . ' (' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_GROUP_SIZE . ',' .
+                self::COLUMN_NUMBER_OF_DIVE . ',' .
+                self::COLUMN_DATE . ',' .
+                self::COLUMN_PRICE . ',' .
+                self::COLUMN_PRICE_NOTE . ') VALUES (?,?,?,?,?,?)';
+        $dailyTripStmt = $this->conn->prepare($query);
+        $dailyTripStmt->bind_param('iiisds', $shopId, $tripData[self::COLUMN_GROUP_SIZE], $tripData[self::COLUMN_NUMBER_OF_DIVE], $tripData[self::COLUMN_DATE], $tripData[self::COLUMN_PRICE], $tripData[self::COLUMN_PRICE_NOTE]);
+        if ($dailyTripStmt->execute()) {
+            $dailyTripId = $dailyTripStmt->insert_id;
+
+            // insert daily trip dive site
+            $dailyTripDiveSites = $tripData[self::TABLE_DAILY_TRIP_DIVE_SITE];
+            $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_DIVE_SITE . ' (' .
+                    self::COLUMN_DAILY_TRIP_ID . ',' . self::COLUMN_DIVE_SITE_ID . ') VALUES(?,?)';
+            $diveSiteStmt = $this->conn->prepare($query);
+            foreach ($dailyTripDiveSites as $site) {
+                if (array_key_exists(self::COLUMN_DIVE_SITE_ID, $site)) {
+                    $diveSiteStmt->bind_param('ii', $dailyTripId, $site[self::COLUMN_DIVE_SITE_ID]);
+                    $diveSiteStmt->execute();
+                }
+            }
+            $diveSiteStmt->close();
+
+            // insert daily trip guides
+            $dailyTripGuides = $tripData[self::TABLE_DAILY_TRIP_GUIDE];
+            $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_GUIDE . ' (' .
+                    self::COLUMN_DAILY_TRIP_ID . ',' .
+                    self::COLUMN_GUIDE_NAME . ') VALUES(?,?)';
+            $guideStmt = $this->conn->prepare($query);
+            foreach ($dailyTripGuides as $guide) {
+                if (array_key_exists(self::COLUMN_GUIDE_NAME, $site)) {
+                    $guideStmt->bind_param('is', $dailyTripId, $guide[self::COLUMN_GUIDE_NAME]);
+                    $guideStmt->execute();
+                }
+            }
+            $guideStmt->close();
+
+            // insert daily trip guests
+            $dailyTripGuests = $tripData[self::TABLE_DAILY_TRIP_GUEST];
+            $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_GUEST . ' (' .
+                    self::COLUMN_DAILY_TRIP_ID . ',' .
+                    self::COLUMN_DIVER_ID . ') VALUES (?,?)';
+            $guestStmt = $this->conn->prepare($query);
+            foreach ($dailyTripGuests as $guest) {
+                if (array_key_exists(self::COLUMN_DIVER_ID, $site)) {
+                    $guestStmt->bind_param('ii', $dailyTripId, $guest[self::COLUMN_DIVER_ID]);
+                    $guestStmt->execute();
+                }
+            }
+            $guestStmt->close();
+
+            // insert daily trip boat
+            $dailtyTripBoats = $tripData[self::TABLE_DAILY_TRIP_BOAT];
+            $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_BOAT . ' (' .
+                    self::COLUMN_DAILY_TRIP_ID . ',' .
+                    self::COLUMN_BOAT_ID . ') VALUES (?,?)';
+            $boatStmt = $this->conn->prepare($query);
+            foreach ($dailtyTripBoats as $boat) {
+                if (array_key_exists(self::COLUMN_BOAT_ID, $site)) {
+                    $boatStmt->bind_param('ii', $dailyTripId, $boat[self::COLUMN_BOAT_ID]);
+                    $boatStmt->execute();
+                }
+            }
+            $boatStmt->close();
+            $response['error'] = false;
+            $response['message'] = 'Daily Trip successfully added.';
+        }
+        $dailyTripStmt->close();
         return $response;
     }
 
@@ -837,6 +917,40 @@ class DatabaseHelper {
             $response['message'] = $response['message'] . 'Course already exist.';
         } else {
             $response['message'] = $response['message'] . 'Course does not exist';
+        }
+        return $response;
+    }
+
+    function isEmpty($value) {
+        return !isset($value) || strlen($value) < 1;
+    }
+
+    function requiredParams($array, $params = array()) {
+        $response = array('error' => false);
+        $error = false;
+        $errorFields = '';
+        $arraySize = count($params);
+        for ($i = 0; $i < $arraySize; $i++) {
+            if (array_key_exists($params[$i], $array)) {
+                if (is_array($array[$params[$i]])) {
+                    if (!isset($array[$params[$i]])) {
+                        $error = true;
+                        $errorFields .= $params[$i] . ', ';
+                    }
+                } else {
+                    if ($this->isEmpty($array[$params[$i]])) {
+                        $error = true;
+                        $errorFields .= $params[$i] . ', ';
+                    }
+                }
+            } else {
+                $error = true;
+                $errorFields .= $params[$i] . ', ';
+            }
+        }
+        if ($error) {
+            $response['error'] = true;
+            $response['message'] = 'Required field(s) ' . substr($errorFields, 0, -2) . ' is missing or empty.';
         }
         return $response;
     }

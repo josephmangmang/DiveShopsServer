@@ -71,25 +71,16 @@ $app->post('/login', function() use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Add new Daily Trip
  * 
  * Required Parameters:
- * shop_id, group_size, number_of_dives, date, price, price_note
- * 
+ * json body 
  */
-$app->post('/trips', function() use($app) {
-    $requiredParams = array('shop_id', 'group_size', 'number_of_dives', 'date', 'price', 'price_note');
-    verifyRequiredParams($requiredParams);
-    $shopUid = $app->request->params($requiredParams[0]);
-    $groupSize = $app->request->params($requiredParams[1]);
-    $numberOfDives = $app->request->params($requiredParams[2]);
-    $date = $app->request->params($requiredParams[3]);
-    $price = $app->request->params($requiredParams[4]);
-    $priceNote = $app->request->params($requiredParams[5]);
-
+$app->post('/trips/:shopUid', function($shopUid) use($app) {
+    $tripJson = $app->request->getBody();
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->addDiveTrip($shopUid, $groupSize, $numberOfDives, $date, $price, $priceNote);
+    $response = $databaseHelper->addDiveTrip($shopUid, $tripJson);
     echoResponse(200, $response);
 });
 
@@ -150,13 +141,13 @@ $app->get('/courses', function() use($app) {
     $offset = $app->request->params($requiredParams[0]);
     $sort = $app->request->params($requiredParams[1]);
     $order = $app->request->params($requiredParams[2]);
-    if(isEmpty($offset)){
+    if (isEmpty($offset)) {
         $offset = "0";
     }
-    if(isEmpty($sort)){
+    if (isEmpty($sort)) {
         $sort = 'ASC';
     }
-    if(isEmpty($order)){
+    if (isEmpty($order)) {
         $order = 'name';
     }
     $databaseHelper = new DatabaseHelper();
@@ -431,8 +422,8 @@ function echoResponse($statusCode, $response) {
  * @param type $value
  * @return BOOLEAN true if empty else false
  */
-function isEmpty($value){
- return !isset($value) || strlen($value) < 1;  
+function isEmpty($value) {
+    return !isset($value) || strlen($value) < 1;
 }
 
 /*
