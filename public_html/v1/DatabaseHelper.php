@@ -349,7 +349,13 @@ class DatabaseHelper {
      * @param array $guides 
      * @param array $sites
      */
-    public function updateDiveTrip($tripId, $groupSize, $numberOfDive, $date, $price, $priceNote, $guides, $sites) {
+    public function updateDiveShopTrip($shopUid, $tripId, $groupSize, $numberOfDive, $date, $price, $priceNote) {
+        $response = array('error' => true, 'message' => 'An error occured while updating Dive Shop Trip. ');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
+            return $response;
+        }
         $query = 'UPDATE ' . self::TABLE_DAILY_TRIP .
                 ' SET ' .
                 self::COLUMN_GROUP_SIZE . '= ?,' .
@@ -358,14 +364,27 @@ class DatabaseHelper {
                 self::COLUMN_PRICE . '=?,' .
                 self::COLUMN_PRICE_NOTE . '=?' .
                 ' WHERE ' .
-                self::COLUMN_DAILY_TRIP_ID . '=?';
+                self::COLUMN_DAILY_TRIP_ID . '=? AND ' . self::COLUMN_DIVE_SHOP_ID . '=?';
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param('iiidsi', $groupSize, $numberOfDive, $date, $price, $priceNote, $tripId);
+        $stmt->bind_param('iisdsii', $groupSize, $numberOfDive, $date, $price, $priceNote, $tripId, $shopId[0]);
         if ($stmt->execute()) {
-            $stmt->prepare('DELETE FROM ' . self::TABLE_DAILY_TRIP_GUIDE . ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?; ' .
-                    'INSERT INTO ' . self::TABLE_DAILY_TRIP_GUIDE . ' VALUES(?,?)');
+            $response['error'] = false;
+            $response['message'] = 'Daily Trip successfully updated. ';
+            if ($stmt->affected_rows < 1) {
+                $response['message'] = 'Nothing changed on Daily Trip.';
+            }
+            $response['daily_trip'] = array(
+                self::COLUMN_DAILY_TRIP_ID => $tripId,
+                self::COLUMN_DIVE_SHOP_ID => $shopId[0],
+                self::COLUMN_GROUP_SIZE => $groupSize,
+                self::COLUMN_NUMBER_OF_DIVE => $numberOfDive,
+                self::COLUMN_DATE => $date,
+                self::COLUMN_PRICE => $price,
+                self::COLUMN_PRICE_NOTE => $priceNote
+            );
         }
-        // Todo ... update daily_trip table, daily_trip_guide table and daily_trip_dive_site table
+        $stmt->close();
+        return $response;
     }
 
     public function getCourses($offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {

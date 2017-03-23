@@ -330,7 +330,7 @@ $app->post('/diveshops/:shopUid/trips', function($shopUid) use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** Done
  * Update selected dive trip
  * 
  * 'group_size'     int         max diver,
@@ -338,8 +338,6 @@ $app->post('/diveshops/:shopUid/trips', function($shopUid) use($app) {
  * 'date'           long        timestamp of dive,
  * 'price'          double      price of the trip,
  * 'price_note'     string      special notes for the listed price,
- * 'guides',        string[]    lisst of guides
- * 'sites'          int[]       List of dive site
  */
 $app->put('/diveshops/:shopUid/trips/:tripId', function($shopUid, $tripId) use($app) {
     $requiredParams = array('group_size', 'number_of_dive', 'date', 'price', 'price_note');
@@ -351,7 +349,7 @@ $app->put('/diveshops/:shopUid/trips/:tripId', function($shopUid, $tripId) use($
     $priceNote = $app->request->put($requiredParams[4]);
 
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateDiveShopTrip($tripId, $groupSize, $numberOfDive, $date, $price, $priceNote);
+    $response = $databaseHelper->updateDiveShopTrip($shopUid, $tripId, $groupSize, $numberOfDive, $date, $price, $priceNote);
     echoResponse(200, $response);
 });
 
