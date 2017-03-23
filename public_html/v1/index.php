@@ -147,11 +147,18 @@ $app->put('/trips/:tripId', function($tripId) use($app) {
  */
 $app->get('/courses', function() use($app) {
     $requiredParams = array('offset', 'sort', 'order');
-    verifyRequiredParams($requiredParams);
     $offset = $app->request->params($requiredParams[0]);
     $sort = $app->request->params($requiredParams[1]);
     $order = $app->request->params($requiredParams[2]);
-
+    if(isEmpty($offset)){
+        $offset = "0";
+    }
+    if(isEmpty($sort)){
+        $sort = 'ASC';
+    }
+    if(isEmpty($order)){
+        $order = 'name';
+    }
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getCourses($offset, $order, $sort);
     echoResponse(200, $response);
@@ -280,13 +287,13 @@ $app->get('/diveshops/:shopUid/courses', function($shopUid) use ($app) {
     $offset = $app->request->params($requiredParams[0]);
     $sort = $app->request->params($requiredParams[1]);
     $order = $app->request->params($requiredParams[2]);
-    if (!isset($offset) || strlen($offset) < 1) {
+    if (isEmpty($offset)) {
         $offset = '0';
     }
-    if (!isset($sort) || strlen($sort) < 1) {
+    if (isEmpty($sort)) {
         $sort = 'ASC';
     }
-    if (!isset($order) || strlen($order)) {
+    if (isEmpty($order)) {
         $order = 'name';
     }
     $databaseHelper = new DatabaseHelper();
@@ -417,6 +424,15 @@ function echoResponse($statusCode, $response) {
     $app->status($statusCode);
     $app->contentType('application/json');
     echo json_encode($response);
+}
+
+/**
+ * Check variable if empty  or unset
+ * @param type $value
+ * @return BOOLEAN true if empty else false
+ */
+function isEmpty($value){
+ return !isset($value) || strlen($value) < 1;  
 }
 
 /*
