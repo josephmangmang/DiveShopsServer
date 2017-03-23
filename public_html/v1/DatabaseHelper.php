@@ -229,7 +229,7 @@ class DatabaseHelper {
         $response = array();
         $query = 'SELECT daily_trip_id, dive_shop_id, group_size, number_of_dive, date, price FROM ' . self::TABLE_DAILY_TRIP . ' ORDER BY ? ? LIMIT ?, ?';
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param('ssii', $sort, $this->getOrderType($order), $offset, $offset + 10);
+        $stmt->bind_param('ssii', $sort, $this->getSortType($order), $offset, $offset + 10);
         if ($stmt->execute()) {
             for ($i = 0; $i < $stmt->num_rows; $i++) {
                 $stmt->bind_result($tripId, $shopId, $groupSize, $numberOfDive, $date, $price);
@@ -247,8 +247,8 @@ class DatabaseHelper {
      * Helper functions/methods
      */
 
-    private function getOrderType($order) {
-        switch (strtolower($order)) {
+    private function getSortType($sort) {
+        switch (strtolower($sort)) {
             case 'asc' :case 'low': case 0: return 'ASC';
                 break;
             case 'desc': case 'high': case 1: return 'DESC';
@@ -290,12 +290,7 @@ class DatabaseHelper {
 
     public function getCourses($offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
         $response = array('error' => true, 'message' => 'An error occured while getting Course list. ');
-        switch ($sort) {
-            case 'asc': case 'ASC' : case 'desc' : case 'DESC':
-                break;
-            default : $sort = 'ASC';
-                break;
-        }
+        $sort = $this->getSortType($sort);
         if ($orderBy !== self::COLUMN_NAME && $orderBy !== self::COLUMN_OFFERED_BY) {
             $response['message'] = $response['message'] . 'Only order by name or offered_by is allowed.';
             return $response;
@@ -545,6 +540,7 @@ class DatabaseHelper {
      */
     private function getDiveShopBoats($shopId, $offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
         $response = array();
+        $sort = $this->getSortType($sort);
         $stmt = $this->conn->prepare('SELECT ' .
                 self::COLUMN_BOAT_ID . ',' .
                 self::COLUMN_DIVE_SHOP_ID . ',' .
@@ -577,6 +573,7 @@ class DatabaseHelper {
      */
     private function getDiveShopCoursesList($shopId, $offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
         $response = array();
+        $sort = $this->getSortType($sort);
         $query = 'SELECT ' .
                 self::COLUMN_DIVE_SHOP_COURSE_ID . ',' .
                 self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_COURSE_ID . ',' .
@@ -616,12 +613,7 @@ class DatabaseHelper {
      */
     public function getDiveShopCourses($shopUid, $offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
         $response = array('error' => true, 'message' => 'An error occured while getting Course list. ');
-        switch ($sort) {
-            case 'asc': case 'ASC' : case 'desc' : case 'DESC':
-                break;
-            default : $sort = 'ASC';
-                break;
-        }
+        $sort = $this->getSortType($sort);
         if ($orderBy !== self::COLUMN_NAME && $orderBy !== self::COLUMN_OFFERED_BY) {
             $response['message'] = $response['message'] . 'Only order by name or offered_by is allowed.';
             return $response;
@@ -654,11 +646,11 @@ class DatabaseHelper {
                 self::COLUMN_DIVE_SHOP_COURSE_ID . '=? AND ' .
                 self::COLUMN_DIVE_SHOP_ID . '=?');
         $stmt->bind_param('dii', $price, $shopCourseId, $shopId[0]);
-        if($stmt->execute()){
+        if ($stmt->execute()) {
             $response['error'] = true;
-            if($stmt->affected_rows < 1){
+            if ($stmt->affected_rows < 1) {
                 $response['message'] = 'Nothing is changed';
-            }else{
+            } else {
                 $response['message'] = 'Successfully updated';
             }
         }
