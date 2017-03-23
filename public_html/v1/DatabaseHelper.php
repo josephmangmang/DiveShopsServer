@@ -748,7 +748,7 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $response['error'] = true;
             if ($stmt->affected_rows < 1) {
-                $response['message'] = 'Nothing is changed';
+                $response['message'] = 'Nothing changed Dive Shop course';
             } else {
                 $response['message'] = 'Successfully updated';
             }
