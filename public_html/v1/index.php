@@ -71,19 +71,6 @@ $app->post('/login', function() use($app) {
     echoResponse(200, $response);
 });
 
-/** Done
- * Add new Daily Trip
- * 
- * Required Parameters:
- * json body 
- */
-$app->post('/trips/:shopUid', function($shopUid) use($app) {
-    $tripJson = $app->request->getBody();
-    $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->addDiveTrip($shopUid, $tripJson);
-    echoResponse(200, $response);
-});
-
 /**
  * Get a list of daily trips and filter by dive site
  * Required parameters: 
@@ -101,33 +88,6 @@ $app->get('/trips', function() use($app) {
 
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getDiveTrips($startDate, $endDate, $offset, $sort, $order);
-    echoResponse(200, $response);
-});
-
-/**
- * Update selected dive trip
- * 
- * 'group_size'     int         max diver,
- * 'number_of_dive' int         number of dive,
- * 'date'           long        timestamp of dive,
- * 'price'          double      price of the trip,
- * 'price_note'     string      special notes for the listed price,
- * 'guides',        string[]    lisst of guides
- * 'sites'          int[]       List of dive site
- */
-$app->put('/trips/:tripId', function($tripId) use($app) {
-    $requiredParams = array('group_size', 'number_of_dive', 'date', 'price', 'price_note', 'guides', 'sites');
-    verifyRequiredParams($requiredParams);
-    $groupSize = $app->request->put($requiredParams[0]);
-    $numberOfDive = $app->request->put($requiredParams[1]);
-    $date = $app->request->put($requiredParams[2]);
-    $price = $app->request->put($requiredParams[3]);
-    $priceNote = $app->request->put($requiredParams[4]);
-    $guides = $app->request->put($requiredParams[5]);
-    $sites = $app->request->put($requiredParams[6]);
-
-    $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateDiveTrip($tripId, $groupSize, $numberOfDive, $date, $price, $priceNote, $guides, $sites);
     echoResponse(200, $response);
 });
 
@@ -354,6 +314,44 @@ $app->get('/diveshops/:shopUid/boats', function($shopUid) use ($app) {
     }
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getBoats($shopUid, $offset);
+    echoResponse(200, $response);
+});
+
+/** Done
+ * Add new Daily Trip
+ * 
+ * Required Parameters:
+ * json body 
+ */
+$app->post('/diveshops/:shopUid/trips', function($shopUid) use($app) {
+    $tripJson = $app->request->getBody();
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->addDiveTrip($shopUid, $tripJson);
+    echoResponse(200, $response);
+});
+
+/**
+ * Update selected dive trip
+ * 
+ * 'group_size'     int         max diver,
+ * 'number_of_dive' int         number of dive,
+ * 'date'           long        timestamp of dive,
+ * 'price'          double      price of the trip,
+ * 'price_note'     string      special notes for the listed price,
+ * 'guides',        string[]    lisst of guides
+ * 'sites'          int[]       List of dive site
+ */
+$app->put('/diveshops/:shopUid/trips/:tripId', function($shopUid, $tripId) use($app) {
+    $requiredParams = array('group_size', 'number_of_dive', 'date', 'price', 'price_note');
+    verifyRequiredParams($requiredParams);
+    $groupSize = $app->request->put($requiredParams[0]);
+    $numberOfDive = $app->request->put($requiredParams[1]);
+    $date = $app->request->put($requiredParams[2]);
+    $price = $app->request->put($requiredParams[3]);
+    $priceNote = $app->request->put($requiredParams[4]);
+
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->updateDiveShopTrip($tripId, $groupSize, $numberOfDive, $date, $price, $priceNote);
     echoResponse(200, $response);
 });
 
