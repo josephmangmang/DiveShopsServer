@@ -67,6 +67,9 @@ class DatabaseHelper {
     const COLUMN_LATITUDE = 'latitude';
     const COLUMN_LONGTITUDE = 'longitude';
     const COLUMN_DAILY_TRIP_GUIDE_ID = 'daily_trip_guide_id';
+    const COLUMN_DAILY_TRIP_BOAT_ID = 'daily_trip_boat_id';
+    const COLUMN_DAILY_TRIP_DIVE_SITE_ID = 'daily_trip_dive_site_id';
+    const COLUMN_DAILY_TRIP_GUEST_ID = 'daily_trip_guest_id';
 
     private $hashids;
 
@@ -307,7 +310,15 @@ class DatabaseHelper {
      */
     public function getDiveTrips($startDate, $endDate, $offset = 0, $sort = 'price', $order = 'ASC') {
         $response = array();
-        $query = 'SELECT daily_trip_id, dive_shop_id, group_size, number_of_dive, date, price FROM ' . self::TABLE_DAILY_TRIP . ' ORDER BY ? ? LIMIT ?, ?';
+        $query = 'SELECT ' .
+                self::COLUMN_DAILY_TRIP_ID . ',' .
+                self::COLUMN_DIVE_SHOP_ID . ', ' .
+                self::COLUMN_GROUP_SIZE . ', ' .
+                self::COLUMN_NUMBER_OF_DIVE . ', ' .
+                self::COLUMN_DATE . ', ' .
+                self::COLUMN_PRICE .
+                ' FROM ' . self::TABLE_DAILY_TRIP .
+                ' ORDER BY ? ? LIMIT ?, ?';
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('ssii', $sort, $this->getSortType($order), $offset, $offset + 10);
         if ($stmt->execute()) {
@@ -764,16 +775,17 @@ class DatabaseHelper {
      */
     public function getGuides($tripId) {
         $response = array();
-        $stmt = $this->conn->prepare('SELECT guide_name FROM ' . self::TABLE_DAILY_TRIP_GUIDE . ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?');
+        $stmt = $this->conn->prepare('SELECT ' .
+                self::COLUMN_DAILY_TRIP_GUIDE_ID . ',' .
+                self::COLUMN_GUIDE_NAME .
+                ' FROM ' . self::TABLE_DAILY_TRIP_GUIDE .
+                ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?');
         $stmt->bind_param('i', $tripId);
         if ($stmt->execute()) {
-            $guides = array();
-            for ($j = 0; $j < $stmt->rows; $j++) {
-                $stmt->bind_result($name);
-                $stmt->fetch();
-                $guides[] = $name;
+            $result = $stmt->get_result();
+            while ($guide = $result->fetch_assoc()) {
+                array_push($guides, $guide);
             }
-            $response[] = $guides;
         }
         $stmt->close();
         return $response;
