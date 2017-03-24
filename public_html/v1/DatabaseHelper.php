@@ -329,9 +329,9 @@ class DatabaseHelper {
 
     private function getSortType($sort) {
         switch (strtolower($sort)) {
-            case 'asc' :case 'low': case 0: return 'ASC';
+            case 'asc' :case 'low': case '0': return 'ASC';
                 break;
-            case 'desc': case 'high': case 1: return 'DESC';
+            case 'desc': case 'high': case '1': return 'DESC';
                 break;
             default : return 'ASC';
         }
@@ -971,6 +971,61 @@ class DatabaseHelper {
             $response['error'] = true;
             $response['message'] = 'Required field(s) ' . substr($errorFields, 0, -2) . ' is missing or empty.';
         }
+        return $response;
+    }
+
+    /**
+     * Get a list of dive shop trips
+     * 
+     * @param type $shopUid
+     * @param type $startDate
+     * @param type $endData
+     * @param type $offset
+     * @param type $sort
+     * @param type $order
+     * @return array
+     */
+    public function getDiveShopDiveTrips($shopUid, $startDate, $endData, $offset = 0, $sort = 'ASC', $order = self::COLUMN_DATE) {
+        $response = array('error' => true, 'message' => 'An error occured while getting Dive Shop Trip list. ');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
+            return $response;
+        }
+        $sort = $this->getSortType($sort);
+        $allowedOrderBy = array(self::COLUMN_GROUP_SIZE, self::COLUMN_DATE, self::COLUMN_PRICE);
+        if (!in_array($order, $allowedOrderBy)) {
+            $order = self::COLUMN_DATE;
+        }
+        if (!is_numeric($offset)) {
+            $response['message'] = $response['message'] . 'Invalid offset, must be integer.';
+            return $response;
+        }
+        $query = 'SELECT ' .
+                self::COLUMN_DAILY_TRIP_ID . ',' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_GROUP_SIZE . ',' .
+                self::COLUMN_NUMBER_OF_DIVE . ',' .
+                self::COLUMN_DATE . ',' .
+                self::COLUMN_PRICE . ',' .
+                self::COLUMN_PRICE_NOTE .
+                ' FROM ' . self::TABLE_DAILY_TRIP .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND timestamp(' . self::COLUMN_DATE . ")" .
+                " BETWEEN ? AND ? ORDER BY $order  $sort  LIMIT ?,?";
+        $stmt = $this->conn->prepare($query);
+        $maxRows = $offset + 10;
+        $stmt->bind_param('issii', $shopId[0], $startDate, $endData, $offset, $maxRows);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $response['dive_trips'] = array();
+            while ($trip = $result->fetch_assoc()) {
+                $trip[self::COLUMN_DIVE_SHOP_ID] = $shopUid;
+                array_push($response['dive_trips'], $trip);
+            }
+            $response['error'] = false;
+            $response['message'] = 'Success';
+        }
+        $stmt->close();
         return $response;
     }
 
