@@ -82,7 +82,7 @@ class DatabaseHelper {
         $this->hashids = new Hashids('', 20);
     }
 
-    /**
+    /** Done
      * Register new User
      */
     public function register($email, $password, $type) {
@@ -150,7 +150,7 @@ class DatabaseHelper {
         return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
 
-    /**
+    /** Done
      * Login validation
      */
     public function login($email, $password, $type) {
@@ -197,13 +197,12 @@ class DatabaseHelper {
     }
 
     /**
-     * Create Daily Trips for Dive shops
-     * @param shop_id The uid of the dive shop. An encrypted hex from dive shop id
-     * @param group_size,
-     * @param number_of_dives, 
-     * @param date, 
-     * @param price, 
-     * @param price_note
+     * Done
+     * Add Dive Shop Daily Trip
+     * 
+     * @param type $shopUid
+     * @param type $tripJson
+     * @return array
      */
     public function addDiveTrip($shopUid, $tripJson) {
         $response = array('error' => true, 'message' => 'An error while adding Dive Trip. ');
@@ -348,17 +347,18 @@ class DatabaseHelper {
         }
     }
 
-    // Todo helper methods
     /**
+     * Done
+     * Update Dive Shop Daily Trip
      * 
-     * @param int $tripId
-     * @param int $groupSize
-     * @param int $numberOfDive
-     * @param long $date
-     * @param double $price
-     * @param String $priceNote
-     * @param array $guides 
-     * @param array $sites
+     * @param type $shopUid
+     * @param type $tripId
+     * @param type $groupSize
+     * @param type $numberOfDive
+     * @param type $date
+     * @param type $price
+     * @param type $priceNote
+     * @return array
      */
     public function updateDiveShopTrip($shopUid, $tripId, $groupSize, $numberOfDive, $date, $price, $priceNote) {
         $response = array('error' => true, 'message' => 'An error occured while updating Dive Shop Trip. ');
@@ -398,6 +398,13 @@ class DatabaseHelper {
         return $response;
     }
 
+    /** Done
+     * Get list of course
+     * @param type $offset
+     * @param type $orderBy
+     * @param type $sort
+     * @return array 
+     */
     public function getCourses($offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
         $response = array('error' => true, 'message' => 'An error occured while getting Course list. ');
         $sort = $this->getSortType($sort);
@@ -431,6 +438,13 @@ class DatabaseHelper {
         return $response;
     }
 
+    /** Done
+     * Add new course
+     * @param type $name
+     * @param type $description
+     * @param type $offeredBy
+     * @return array
+     */
     public function addCourse($name, $description = '', $offeredBy = '') {
         $response = array('error' => true, 'message' => 'An error occured while adding Course. ');
         $stmt = $this->conn->prepare('INSERT INTO ' .
@@ -450,6 +464,15 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Update Course
+     * @param type $courseId
+     * @param type $name
+     * @param type $description
+     * @param type $offeredBy
+     * @return array
+     */
     public function updateCourse($courseId, $name, $description, $offeredBy) {
         $response = array('error' => true, 'message' => 'An error occured while updating course. ');
         $stmt = $this->conn->prepare('UPDATE ' .
@@ -473,6 +496,15 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Get list of dive site
+     * @param type $lat
+     * @param type $lng
+     * @param type $radius
+     * @param type $offset
+     * @return array
+     */
     public function getDiveSite($lat, $lng, $radius = 25, $offset = '0') {
         $response = array('error' => true, 'message' => 'An error occured while getting list of Dive Site. ');
         if (!ctype_digit($offset)) {
@@ -510,6 +542,17 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Add new Dive Site
+     * 
+     * @param type $name
+     * @param type $description
+     * @param type $address
+     * @param type $latitude
+     * @param type $longitude
+     * @return array response
+     */
     public function addDiveSite($name, $description, $address, $latitude, $longitude) {
         $response = array('error' => true, 'message' => 'An error occured while adding Dive Site. ');
         $query = 'INSERT INTO ' . self::TABLE_DIVE_SITE . '(' .
@@ -540,6 +583,18 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Update Dive Site
+     * 
+     * @param type $siteId
+     * @param type $name
+     * @param type $description
+     * @param type $address
+     * @param type $latitude
+     * @param type $longitude
+     * @return array
+     */
     public function updateDiveSite($siteId, $name, $description, $address, $latitude, $longitude) {
         $response = array('error' => true, 'message' => 'An error occured while updating Dive Site. ');
         $stmt = $this->conn->prepare('UPDATE ' .
@@ -569,6 +624,15 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Get list of Dive Shops
+     * @param type $lat
+     * @param type $lng
+     * @param type $radius
+     * @param type $offset
+     * @return array
+     */
     public function getDiveShops($lat, $lng, $radius, $offset) {
         $response = array('error' => true, 'message' => 'An error occured while getting list of Dive Site. ');
         if (!ctype_digit($offset)) {
@@ -609,6 +673,13 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Get Dive Shop informations
+     * 
+     * @param type $shopUid
+     * @return array
+     */
     public function getDiveShop($shopUid) {
         $response = array('error' => true, 'message' => 'An error occured while getting Dive Shop. ');
         $shopId = $this->hashids->decode($shopUid);
@@ -714,12 +785,14 @@ class DatabaseHelper {
     }
 
     /**
+     * Done 
+     * Get Dive Shop Courses
      * 
      * @param type $shopUid
      * @param type $offset
      * @param type $orderBy
      * @param string $sort
-     * @return string
+     * @return array
      */
     public function getDiveShopCourses($shopUid, $offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
         $response = array('error' => true, 'message' => 'An error occured while getting Course list. ');
@@ -743,6 +816,14 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Update Dive Shop Course
+     * @param type $shopUid
+     * @param type $shopCourseId
+     * @param type $price
+     * @return array
+     */
     public function updateDiveShopCourse($shopUid, $shopCourseId, $price) {
         $response = array('error' => true, 'message' => 'An error occured while updating Dive Shop Course. ');
         $shopId = $this->hashids->decode($shopUid);
@@ -815,6 +896,14 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Add new Dive Shop Boat
+     * 
+     * @param type $diveShopUid
+     * @param type $name
+     * @return array
+     */
     public function addBoat($diveShopUid, $name) {
         $decode = $this->hashids->decode($diveShopUid);
         if (count($decode) < 1) {
@@ -843,6 +932,13 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Get a list of Dive Shop Boat
+     * @param type $shopUid
+     * @param type $offset
+     * @return array
+     */
     public function getBoats($shopUid, $offset = '0') {
         $response = array('error' => true, 'message' => 'An error occured while getting list of boats.');
         $shopId = $this->hashids->decode($shopUid);
@@ -864,6 +960,14 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Update Dive Shop Boat
+     * 
+     * @param type $boatId
+     * @param type $name
+     * @return array
+     */
     public function updateBoat($boatId, $name) {
         $response = array('error' => true, 'message' => 'An error occured while updating boat. ');
         $stmt = $this->conn->prepare('UPDATE ' .
@@ -893,6 +997,13 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Delete Dive Shop Boat
+     * 
+     * @param type $boatId
+     * @return array
+     */
     public function deleteBoat($boatId) {
         $response = array('error' => true, 'message' => 'An error occured while deleting boat. ');
         $stmt = $this->conn->prepare('DELETE FROM ' . self::TABLE_BOAT . ' WHERE ' . self::COLUMN_BOAT_ID . '=?');
@@ -910,6 +1021,15 @@ class DatabaseHelper {
         return $response;
     }
 
+    /**
+     * Done
+     * Add new Dive Shop Course
+     * 
+     * @param type $shopUid
+     * @param type $courseId
+     * @param type $price
+     * @return array
+     */
     public function addDiveShopCourse($shopUid, $courseId, $price) {
         $response = array('error' => true, 'message' => 'An error occured while adding Dive Shop Course. ');
         $shopId = $this->hashids->decode($shopUid);
@@ -987,6 +1107,7 @@ class DatabaseHelper {
     }
 
     /**
+     * Done
      * Get a list of dive shop trips
      * 
      * @param type $shopUid
