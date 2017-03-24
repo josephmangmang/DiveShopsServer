@@ -71,7 +71,7 @@ $app->post('/login', function() use($app) {
     echoResponse(200, $response);
 });
 
-/**
+/** NOT YET
  * Get a list of daily trips and filter by dive site
  * Required parameters: 
  * start_Date, end_Date, offset, sort {sort=price or rating, order=ASC or DESC}
