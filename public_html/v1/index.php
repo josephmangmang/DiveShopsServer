@@ -317,7 +317,7 @@ $app->put('/diveshops/:shopUid/boats/:boatId', function($shopUid, $boatId) use (
 /** Done
  * Delete boat
  */
-$app->delete('/diveshops/:shopUid/boats/:boatId', function($shopUid, $boatId) use ($app) {
+$app->delete('/diveshops/:shopUid/boats/:boatId', function($shopUid, $boatId) {
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->deleteBoat($shopUid, $boatId);
     echoResponse(200, $response);
