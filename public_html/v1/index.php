@@ -304,6 +304,26 @@ $app->get('/diveshops/:shopUid/boats', function($shopUid) use ($app) {
 });
 
 /** Done
+ * Update boat
+ */
+$app->put('/diveshops/:shopUid/boats/:boatId', function($shopUid, $boatId) use ($app) {
+    verifyRequiredParams(array('name'));
+    $name = $app->request->put('name');
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->updateBoat($shopUid, $boatId, $name);
+    echoResponse(200, $response);
+});
+
+/** Done
+ * Delete boat
+ */
+$app->delete('/diveshops/:shopUid/boats/:boatId', function($shopUid, $boatId) use ($app) {
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->deleteBoat($shopUid, $boatId);
+    echoResponse(200, $response);
+});
+
+/** Done
  * Get list of Dive Shop Dive Trips
  */
 $app->get('/diveshops/:shopUid/trips', function($shopUid) use ($app) {
@@ -313,7 +333,7 @@ $app->get('/diveshops/:shopUid/trips', function($shopUid) use ($app) {
     $offset = $app->request->params('offset');
     $sort = $app->request->params('sort');
     $order = $app->request->params('order');
-    if(isEmpty($offset)){
+    if (isEmpty($offset)) {
         $offset = 0;
     }
     $databaseHelper = new DatabaseHelper();
@@ -354,25 +374,6 @@ $app->put('/diveshops/:shopUid/trips/:tripId', function($shopUid, $tripId) use($
 
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->updateDiveShopTrip($shopUid, $tripId, $groupSize, $numberOfDive, $date, $price, $priceNote);
-    echoResponse(200, $response);
-});
-
-/** Done
- * Update boat
- */
-$app->put('/boats/:boatId', function($boatId) use ($app) {
-    verifyRequiredParams(array('name'));
-    $name = $app->request->put('name');
-    $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateBoat($boatId, $name);
-    echoResponse(200, $response);
-});
-/** Done
- * Delete boat
- */
-$app->delete('/boats/:boatId', function($boatId) use ($app) {
-    $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->deleteBoat($boatId);
     echoResponse(200, $response);
 });
 

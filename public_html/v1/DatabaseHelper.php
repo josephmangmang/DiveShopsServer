@@ -968,13 +968,20 @@ class DatabaseHelper {
      * @param type $name
      * @return array
      */
-    public function updateBoat($boatId, $name) {
+    public function updateBoat($shopUid, $boatId, $name) {
         $response = array('error' => true, 'message' => 'An error occured while updating boat. ');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
+            return $response;
+        }
         $stmt = $this->conn->prepare('UPDATE ' .
                 self::TABLE_BOAT . ' SET ' .
                 self::COLUMN_NAME . '=?  WHERE ' .
+                self::COLUMN_DIVE_SHOP_ID . '=?' .
+                ' AND ' .
                 self::COLUMN_BOAT_ID . '=?');
-        $stmt->bind_param('si', $name, $boatId);
+        $stmt->bind_param('sii', $name, $shopId[0], $boatId);
         if ($stmt->execute()) {
             $stmt->close();
             $response['error'] = false;
@@ -1004,10 +1011,17 @@ class DatabaseHelper {
      * @param type $boatId
      * @return array
      */
-    public function deleteBoat($boatId) {
+    public function deleteBoat($shopUid, $boatId) {
         $response = array('error' => true, 'message' => 'An error occured while deleting boat. ');
-        $stmt = $this->conn->prepare('DELETE FROM ' . self::TABLE_BOAT . ' WHERE ' . self::COLUMN_BOAT_ID . '=?');
-        $stmt->bind_param('i', $boatId);
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
+            return $response;
+        }
+        $stmt = $this->conn->prepare(
+                'DELETE FROM ' . self::TABLE_BOAT .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' . self::COLUMN_BOAT_ID . '=?');
+        $stmt->bind_param('ii', $shopId[0], $boatId);
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = 'Successfully deleted';
