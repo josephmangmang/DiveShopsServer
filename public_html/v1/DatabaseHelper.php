@@ -704,6 +704,7 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $result = $stmt->get_result();
             $response['dive_shop'] = $result->fetch_assoc();
+            $response['dive_shop'][self::COLUMN_DIVE_SHOP_ID] = $shopId[0];
             $response['dive_shop']['courses'] = $this->getDiveShopCoursesList($shopId[0]);
             $response['dive_shop']['boats'] = $this->getDiveShopBoats($shopId[0]);
         }
@@ -724,7 +725,6 @@ class DatabaseHelper {
         $sort = $this->getSortType($sort);
         $stmt = $this->conn->prepare('SELECT ' .
                 self::COLUMN_BOAT_ID . ',' .
-                self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_IMAGE .
                 ' FROM ' . self::TABLE_BOAT .
@@ -735,6 +735,7 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $result = $stmt->get_result();
             while ($boat = $result->fetch_assoc()) {
+                $boat[self::COLUMN_DIVE_SHOP_ID] = $shopId[0];
                 array_push($response, $boat);
             }
         } else {
@@ -758,7 +759,6 @@ class DatabaseHelper {
         $query = 'SELECT ' .
                 self::COLUMN_DIVE_SHOP_COURSE_ID . ',' .
                 self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_COURSE_ID . ',' .
-                self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_PRICE . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
@@ -775,6 +775,7 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $result = $stmt->get_result();
             while ($course = $result->fetch_assoc()) {
+                $course[self::COLUMN_DIVE_SHOP_ID] = $shopId[0];
                 array_push($response, $course);
             }
         } else {
@@ -900,34 +901,33 @@ class DatabaseHelper {
      * Done
      * Add new Dive Shop Boat
      * 
-     * @param type $diveShopUid
+     * @param type $shopUid
      * @param type $name
      * @return array
      */
-    public function addBoat($diveShopUid, $name) {
-        $decode = $this->hashids->decode($diveShopUid);
-        if (count($decode) < 1) {
+    public function addBoat($shopUid, $name) {
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
             $response['error'] = true;
             $response['message'] = 'An error occured while adding Boat. Invalid dive_shop_id';
             return $response;
         }
-        $diveShopUid = $decode[0];
         $response = array();
         $stmt = $this->conn->prepare('INSERT INTO ' . self::TABLE_BOAT . '(' . self::COLUMN_DIVE_SHOP_ID . ',' . self::COLUMN_NAME . ') VALUES (?,?)');
-        $stmt->bind_param('is', $diveShopUid, $name);
+        $stmt->bind_param('is', $shopId[0], $name);
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = $name . ' successfully added';
             $response['boat'] = array(
                 self::COLUMN_BOAT_ID => $stmt->insert_id,
-                self::COLUMN_DIVE_SHOP_ID => $diveShopUid,
+                self::COLUMN_DIVE_SHOP_ID => $shopUid,
                 self::COLUMN_NAME => $name,
                 self::COLUMN_IMAGE => ""
             );
         } else {
             $response['error'] = true;
             $response['message'] = 'An error occured while adding Boat. ' . $stmt->error;
-            $response['shop_id'] = $diveShopUid;
+            $response['shop_id'] = $shopUid;
         }
         return $response;
     }
@@ -988,7 +988,6 @@ class DatabaseHelper {
             $response['message'] = 'Success';
             $stmt = $this->conn->prepare('SELECT ' .
                     self::COLUMN_BOAT_ID . ',' .
-                    self::COLUMN_DIVE_SHOP_ID . ',' .
                     self::COLUMN_NAME . ',' .
                     self::COLUMN_IMAGE . ' FROM ' . self::TABLE_BOAT .
                     ' WHERE ' . self::COLUMN_BOAT_ID . '=?');
@@ -996,6 +995,7 @@ class DatabaseHelper {
             if ($stmt->execute()) {
                 $result = $stmt->get_result();
                 $response['boat'] = $result->fetch_assoc();
+                $response['boat'][self::COLUMN_DIVE_SHOP_ID] = $shopUid;
             }
         } else {
             $response['message'] = $response['message'] . $stmt->error;
