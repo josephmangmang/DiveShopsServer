@@ -433,7 +433,7 @@ function isEmpty($value) {
  * 
  */
 $app->notFound(function() {
-    $response = array('error' => true, 'message' => 'Url not found');
+    $response = array('error' => true, 'message' => 'Not found');
     echoResponse(404, $response);
 });
 
