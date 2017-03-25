@@ -154,7 +154,7 @@ class DatabaseHelper {
      * Login validation
      */
     public function login($email, $password, $type) {
-        $response = array();
+        $response = array('error' => true, 'message' => 'An error occured while Loggin in. ');
         if (!$this->isValidEmail($email)) {
             $response['error'] = true;
             $response['message'] = 'Email address is not valid';
