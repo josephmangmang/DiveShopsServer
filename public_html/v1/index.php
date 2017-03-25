@@ -163,7 +163,7 @@ $app->get('/sites', function() use($app) {
         $radius = 25;
     }
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveSite($lat, $lng, $radius, $offset);
+    $response = $databaseHelper->getDiveSites($lat, $lng, $radius, $offset);
     echoResponse(200, $response);
 });
 

@@ -505,7 +505,7 @@ class DatabaseHelper {
      * @param type $offset
      * @return array
      */
-    public function getDiveSite($lat, $lng, $radius = 25, $offset = '0') {
+    public function getDiveSites($lat, $lng, $radius = 25, $offset = '0') {
         $response = array('error' => true, 'message' => 'An error occured while getting list of Dive Site. ');
         if (!ctype_digit($offset)) {
             $response['message'] = $response['message'] . ' Invalid offset "' . $offset . '"';
