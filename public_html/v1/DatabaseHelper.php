@@ -184,7 +184,7 @@ class DatabaseHelper {
                 $response['message'] = 'Success';
 
                 $response['user'] = array(
-                    'uid' => $this->hashids->encode($val),
+                    'uid' => $this->hashids->encode($userID),
                     'auth_key' => 'TODO auth_key',
                     'acount_type' => $accountType);
             } else {
