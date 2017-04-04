@@ -830,6 +830,10 @@ class DatabaseHelper {
             $response['message'] = $response['message'] . 'Invalid Dive Shop id';
             return $response;
         }
+        if(!is_numeric($price)){
+            $response['message'] = $response['message'] . 'Invalid price';
+            return $response;
+        }
         $stmt = $this->conn->prepare(
                 'UPDATE ' . self::TABLE_DIVE_SHOP_COURSE . ' SET ' .
                 self::COLUMN_PRICE . '=? WHERE ' .
