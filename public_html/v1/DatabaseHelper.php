@@ -105,7 +105,7 @@ class DatabaseHelper {
                 self::COLUMN_ACCOUNT_TYPE .
                 ') VALUES(?, ?, ?)';
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param('ssi', $email, $passwordHash, $type);
+        $stmt->bind_param('sss', $email, $passwordHash, $type);
         if ($stmt->execute()) {
             $userId = $stmt->insert_id;
             $stmt->close();
