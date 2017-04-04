@@ -38,7 +38,7 @@ class DatabaseHelper {
     const TABLE_COURSE = 'course';
     // Column names
     const COLUMN_USER_ID = 'user_id';
-    const COLUMN_IS_DIVER = 'is_diver';
+    const COLUMN_ACCOUNT_TYPE = 'account_type';
     const COLUMN_DIVE_SHOP_ID = 'dive_shop_id';
     const COLUMN_EMAIL = 'email';
     const COLUMN_PASSWORD = 'password';
@@ -92,9 +92,9 @@ class DatabaseHelper {
             $response['message'] = 'Email address is not valid';
             return $response;
         }
-        if ($type != 0 AND $type != 1) {
+        if (!$this->isValidAccountType($type)) {
             $response['error'] = true;
-            $response['message'] = 'Uknown user type';
+            $response['message'] = "Uknown account type $type";
             return $response;
         }
         include_once '../../include/PassHash.php';
@@ -102,7 +102,7 @@ class DatabaseHelper {
         $query = 'INSERT ' . self::TABLE_USER . '(' .
                 self::COLUMN_EMAIL . ', ' .
                 self::COLUMN_PASSWORD . ',' .
-                self::COLUMN_IS_DIVER .
+                self::COLUMN_ACCOUNT_TYPE .
                 ') VALUES(?, ?, ?)';
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('ssi', $email, $passwordHash, $type);
@@ -119,7 +119,7 @@ class DatabaseHelper {
                 default :
                     $response['error'] = true;
                     $response['type'] = $type;
-                    $response['message'] = 'Unkown account type';
+                    $response['message'] = "Unkown account type $type";
                     return $response;
             }
             $stmt = $this->conn->prepare($query);
@@ -160,16 +160,16 @@ class DatabaseHelper {
             $response['message'] = 'Email address is not valid';
             return $response;
         }
-        if ($type != 0 AND $type != 1) {
+        if (!$this->isValidAccountType($type)) {
             $response['error'] = true;
-            $response['message'] = 'Uknown user type';
+            $response['message'] = "Uknown user type $type";
             return $response;
         }
 
         $query = 'SELECT ' .
                 self::COLUMN_USER_ID . ',' .
                 self::COLUMN_PASSWORD . ',' .
-                self::COLUMN_IS_DIVER . ' FROM ' .
+                self::COLUMN_ACCOUNT_TYPE . ' FROM ' .
                 self::TABLE_USER . ' WHERE ' .
                 self::COLUMN_EMAIL . '=?';
 
@@ -184,9 +184,9 @@ class DatabaseHelper {
                 $response['message'] = 'Success';
 
                 $response['user'] = array(
-                    'uid' => $this->hashids->encode($userID),
+                    self::COLUMN_USER_ID => $this->hashids->encode($userID),
                     'auth_key' => 'TODO auth_key',
-                    'acount_type' => $accountType);
+                    self::COLUMN_ACCOUNT_TYPE => $accountType);
             } else {
                 $response['error'] = true;
                 $response['message'] = "Email or password does't match";
@@ -1176,11 +1176,15 @@ class DatabaseHelper {
         return $response;
     }
 
+    public function isValidAccountType($type) {
+        return ($type === AccountType::DIVER OR $type === AccountType::DIVE_SHOP);
+    }
+
 }
 
 class AccountType {
 
-    const DIVE_SHOP = 0;
-    const DIVER = 1;
+    const DIVE_SHOP = 'dive_shop';
+    const DIVER = 'diver';
 
 }
