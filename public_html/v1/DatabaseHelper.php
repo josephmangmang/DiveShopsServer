@@ -153,22 +153,18 @@ class DatabaseHelper {
     /** Done
      * Login validation
      */
-    public function login($email, $password, $type) {
+    public function login($email, $password) {
         $response = array('error' => true, 'message' => 'An error occured while Loggin in. ');
         if (!$this->isValidEmail($email)) {
             $response['error'] = true;
             $response['message'] = 'Email address is not valid';
             return $response;
         }
-        if (!$this->isValidAccountType($type)) {
-            $response['error'] = true;
-            $response['message'] = "Uknown user type $type";
-            return $response;
-        }
 
         $query = 'SELECT ' .
                 self::COLUMN_USER_ID . ',' .
                 self::COLUMN_PASSWORD . ',' .
+                self::COLUMN_CREATE_TIME . ',' .
                 self::COLUMN_ACCOUNT_TYPE . ' FROM ' .
                 self::TABLE_USER . ' WHERE ' .
                 self::COLUMN_EMAIL . '=?';
@@ -176,7 +172,7 @@ class DatabaseHelper {
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('s', $email);
         if ($stmt->execute()) {
-            $stmt->bind_result($userID, $passwordHash, $accountType);
+            $stmt->bind_result($userID, $passwordHash, $createdTime, $accountType);
             $stmt->fetch();
             include_once '../../include/PassHash.php';
             if (PassHash::check_password($passwordHash, $password)) {
@@ -185,6 +181,8 @@ class DatabaseHelper {
 
                 $response['user'] = array(
                     self::COLUMN_USER_ID => $this->hashids->encode($userID),
+                    self::COLUMN_EMAIL => $email,
+                    self::COLUMN_CREATE_TIME => $createdTime,
                     'auth_key' => 'TODO auth_key',
                     self::COLUMN_ACCOUNT_TYPE => $accountType);
             } else {

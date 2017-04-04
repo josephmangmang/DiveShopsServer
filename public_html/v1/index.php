@@ -61,13 +61,12 @@ $app->post('/register', function() use($app) {
  * @param email, password, type
  */
 $app->post('/login', function() use($app) {
-    verifyRequiredParams(array('email', 'password', 'type'));
+    verifyRequiredParams(array('email', 'password'));
     $email = $app->request->params('email');
     $password = $app->request->params('password');
-    $type = $app->request->params('type');
 
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->login($email, $password, $type);
+    $response = $databaseHelper->login($email, $password);
     echoResponse(200, $response);
 });
 
