@@ -193,7 +193,7 @@ class DatabaseHelper {
         $stmt->close();
         return $response;
     }
-
+   
     /**
      * Done
      * Add Dive Shop Daily Trip
@@ -203,7 +203,7 @@ class DatabaseHelper {
      * @return array
      */
     public function addDiveTrip($shopUid, $tripJson) {
-        $response = array('error' => true, 'message' => 'An error while adding Dive Trip. ');
+        $response = array('error' => true, 'message' => 'An error occured while adding Dive Trip. ');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
             $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
