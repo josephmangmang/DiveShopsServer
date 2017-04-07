@@ -193,7 +193,68 @@ class DatabaseHelper {
         $stmt->close();
         return $response;
     }
-   
+
+    public function getUser($uid, $accountType) {
+        $response = array('error' => true, 'message' => 'An error occured while getting user account. ');
+        $type = str_replace(' ', '_', strtolower($accountType));
+        $userId = $this->hashids->decode($uid);
+        if (count($userId) < 1) {
+            $response['message'] = $response['message'] . "Invalid account id: $uid";
+            return $response;
+        }
+        if (!$this->isValidAccountType($type)) {
+            $response['message'] = $response['message'] . "Invalid account type: $accountType";
+            return $response;
+        }
+        switch ($type) {
+            case AccountType::DIVER:
+                $query = 'SELECT ' .
+                        self::COLUMN_DIVER_ID . ',' .
+                        self::COLUMN_NAME .
+                        ' FROM ' . self::TABLE_DIVER .
+                        ' WHERE ' . self::COLUMN_USER_ID . '=?';
+                $stmt = $this->conn->prepare($query);
+                $stmt->bind_param('i', $userId[0]);
+                if ($stmt->execute()) {
+                    $result = $stmt->get_result();
+                    $response[self::TABLE_USER] = $result->fetch_assoc();
+                    $response[self::TABLE_USER][self::COLUMN_DIVER_ID] = $this->hashids->encode($response[self::TABLE_USER][self::COLUMN_DIVER_ID]);
+                    $response[self::TABLE_USER][self::COLUMN_USER_ID] = $uid;
+                    $response['error'] = false;
+                    $response['message'] = 'Success';
+                }
+                break;
+            case AccountType::DIVE_SHOP:
+                $query = 'SELECT ' .
+                        self::COLUMN_DIVE_SHOP_ID . ',' .
+                        self::COLUMN_NAME . ',' .
+                        self::COLUMN_DESCRIPTION . ',' .
+                        self::COLUMN_CONTACT_NUMBER . ',' .
+                        self::COLUMN_ADDRESS . ',' .
+                        self::COLUMN_PRICE_PER_DIVE . ',' .
+                        self::COLUMN_LATITUDE . ',' .
+                        self::COLUMN_LONGTITUDE . ',' .
+                        self::COLUMN_SPECIAL_SERVICE .
+                        ' FROM ' . self::TABLE_DIVE_SHOP .
+                        ' WHERE ' . self::COLUMN_USER_ID . '=?';
+                $stmt = $this->conn->prepare($query);
+                $stmt->bind_param('i', $userId[0]);
+                if ($stmt->execute()) {
+                    $result = $stmt->get_result();
+                    $response[self::TABLE_DIVE_SHOP] = $result->fetch_assoc();
+                    $response[self::TABLE_DIVE_SHOP][self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($response[self::TABLE_DIVE_SHOP][self::COLUMN_DIVE_SHOP_ID]);
+                    $response[self::TABLE_DIVE_SHOP][self::COLUMN_USER_ID] = $uid;
+                    $response[self::TABLE_DIVE_SHOP]['courses'] = $this->getDiveShopCoursesList($userId[0]);
+                    $response[self::TABLE_DIVE_SHOP]['boats'] = $this->getDiveShopBoats($userId[0]);
+                    $response['error'] = false;
+                    $response['message'] = 'Success';
+                }
+                $stmt->close();
+                break;
+        }
+        return $response;
+    }
+
     /**
      * Done
      * Add Dive Shop Daily Trip
@@ -830,7 +891,7 @@ class DatabaseHelper {
             $response['message'] = $response['message'] . 'Invalid Dive Shop id';
             return $response;
         }
-        if(!is_numeric($price)){
+        if (!is_numeric($price)) {
             $response['message'] = $response['message'] . 'Invalid price';
             return $response;
         }

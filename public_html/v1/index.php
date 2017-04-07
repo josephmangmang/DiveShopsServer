@@ -70,6 +70,12 @@ $app->post('/login', function() use($app) {
     echoResponse(200, $response);
 });
 
+$app->get('/users/:accountType/:uid', function( $accountType, $uid) use ($app) {
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->getUser($uid, $accountType);
+    echoResponse(200, $response);
+});
+
 /** NOT YET
  * Get a list of daily trips and filter by dive site
  * Required parameters: 
