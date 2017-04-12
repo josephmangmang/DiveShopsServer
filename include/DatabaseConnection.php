@@ -15,6 +15,7 @@ class DatabaseConnection{
     public function connect(){
         include_once 'Config.php';
         $this->conn = new mysqli(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME);
+        $this->conn->set_charset("utf8");
         if(mysqli_connect_errno()){
             echo "Failed to connect to MySQL: " . mysqli_connect_error();
         }
