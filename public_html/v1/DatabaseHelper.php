@@ -488,7 +488,7 @@ class DatabaseHelper {
             $response['message'] = 'Success';
             $response['courses'] = array();
             while ($course = $result->fetch_assoc()) {
-                array_push($response['courses'], $course);
+                $response['courses'][] = $course;
             }
         } else {
             $response['message'] = $response['message'] . $stmt->error;
@@ -592,7 +592,7 @@ class DatabaseHelper {
             $response['dive_sites'] = array();
             $result = $stmt->get_result();
             while ($site = $result->fetch_assoc()) {
-                array_push($response['dive_sites'], $site);
+                $response['dive_sites'][] = $site;
             }
         } else {
             $response['message'] = $response['message'] . $stmt->error;
@@ -723,7 +723,7 @@ class DatabaseHelper {
             $result = $stmt->get_result();
             while ($site = $result->fetch_assoc()) {
                 $site[self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($site[self::COLUMN_DIVE_SHOP_ID]);
-                array_push($response['dive_shops'], $site);
+                $response['dive_shops'][] = $site;
             }
         } else {
             $response['message'] = $response['message'] . $stmt->error;
@@ -763,9 +763,11 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $result = $stmt->get_result();
             $response['dive_shop'] = $result->fetch_assoc();
-            $response['dive_shop'][self::COLUMN_DIVE_SHOP_ID] = $shopId[0];
+            $response['dive_shop'][self::COLUMN_DIVE_SHOP_ID] = $shopUid;
             $response['dive_shop']['courses'] = $this->getDiveShopCoursesList($shopId[0]);
             $response['dive_shop']['boats'] = $this->getDiveShopBoats($shopId[0]);
+            $response['error'] = false;
+            $response['message'] = 'Success';
         }
         $stmt->close();
         return $response;
@@ -795,7 +797,7 @@ class DatabaseHelper {
             $result = $stmt->get_result();
             while ($boat = $result->fetch_assoc()) {
                 $boat[self::COLUMN_DIVE_SHOP_ID] = $shopId[0];
-                array_push($response, $boat);
+                $response[] = $boat;
             }
         } else {
             return $stmt->error;
@@ -834,8 +836,8 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $result = $stmt->get_result();
             while ($course = $result->fetch_assoc()) {
-                $course[self::COLUMN_DIVE_SHOP_ID] = $shopId[0];
-                array_push($response, $course);
+                $course[self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($shopId);
+                $response[] = $course;
             }
         } else {
             return $stmt->error;
@@ -929,7 +931,7 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $result = $stmt->get_result();
             while ($guide = $result->fetch_assoc()) {
-                array_push($guides, $guide);
+                $guides[] = $guide;
             }
         }
         $stmt->close();
@@ -1230,7 +1232,7 @@ class DatabaseHelper {
             $response['dive_trips'] = array();
             while ($trip = $result->fetch_assoc()) {
                 $trip[self::COLUMN_DIVE_SHOP_ID] = $shopUid;
-                array_push($response['dive_trips'], $trip);
+                $response['dive_trips'][] = $trip;
             }
             $response['error'] = false;
             $response['message'] = 'Success';
