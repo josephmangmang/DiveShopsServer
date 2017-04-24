@@ -229,6 +229,7 @@ class DatabaseHelper {
                         self::COLUMN_DIVE_SHOP_ID . ',' .
                         self::COLUMN_NAME . ',' .
                         self::COLUMN_DESCRIPTION . ',' .
+                        self::COLUMN_PHOTO_COVER . ',' .
                         self::COLUMN_CONTACT_NUMBER . ',' .
                         self::COLUMN_ADDRESS . ',' .
                         self::COLUMN_PRICE_PER_DIVE . ',' .
@@ -702,6 +703,7 @@ class DatabaseHelper {
                 self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_PHOTO_COVER . ',' .
                 self::COLUMN_CONTACT_NUMBER . ',' .
                 self::COLUMN_ADDRESS . ',' .
                 self::COLUMN_PRICE_PER_DIVE . ',' .
@@ -750,6 +752,7 @@ class DatabaseHelper {
                 self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_PHOTO_COVER . ',' .
                 self::COLUMN_CONTACT_NUMBER . ',' .
                 self::COLUMN_ADDRESS . ',' .
                 self::COLUMN_PRICE_PER_DIVE . ',' .
@@ -787,6 +790,7 @@ class DatabaseHelper {
         $stmt = $this->conn->prepare('SELECT ' .
                 self::COLUMN_BOAT_ID . ',' .
                 self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
                 self::COLUMN_IMAGE .
                 ' FROM ' . self::TABLE_BOAT .
                 ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=?' .
@@ -970,7 +974,7 @@ class DatabaseHelper {
      * @param type $name
      * @return array
      */
-    public function addBoat($shopUid, $name) {
+    public function addBoat($shopUid, $name, $description) {
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
             $response['error'] = true;
@@ -978,8 +982,8 @@ class DatabaseHelper {
             return $response;
         }
         $response = array();
-        $stmt = $this->conn->prepare('INSERT INTO ' . self::TABLE_BOAT . '(' . self::COLUMN_DIVE_SHOP_ID . ',' . self::COLUMN_NAME . ') VALUES (?,?)');
-        $stmt->bind_param('is', $shopId[0], $name);
+        $stmt = $this->conn->prepare('INSERT INTO ' . self::TABLE_BOAT . '(' . self::COLUMN_DIVE_SHOP_ID . ',' . self::COLUMN_NAME . ',' . self::COLUMN_DESCRIPTION . ') VALUES (?,?,?)');
+        $stmt->bind_param('iss', $shopId[0], $name, $description);
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = $name . ' successfully added';
@@ -1033,7 +1037,7 @@ class DatabaseHelper {
      * @param type $name
      * @return array
      */
-    public function updateBoat($shopUid, $boatId, $name) {
+    public function updateBoat($shopUid, $boatId, $name, $description) {
         $response = array('error' => true, 'message' => 'An error occured while updating boat. ');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
@@ -1042,11 +1046,12 @@ class DatabaseHelper {
         }
         $stmt = $this->conn->prepare('UPDATE ' .
                 self::TABLE_BOAT . ' SET ' .
-                self::COLUMN_NAME . '=?  WHERE ' .
+                self::COLUMN_NAME . '=?, ' .
+                self::COLUMN_DESCRIPTION . '=?  WHERE ' .
                 self::COLUMN_DIVE_SHOP_ID . '=?' .
                 ' AND ' .
                 self::COLUMN_BOAT_ID . '=?');
-        $stmt->bind_param('sii', $name, $shopId[0], $boatId);
+        $stmt->bind_param('ssii', $name, $description, $shopId[0], $boatId);
         if ($stmt->execute()) {
             $stmt->close();
             $response['error'] = false;
@@ -1054,6 +1059,7 @@ class DatabaseHelper {
             $stmt = $this->conn->prepare('SELECT ' .
                     self::COLUMN_BOAT_ID . ',' .
                     self::COLUMN_NAME . ',' .
+                    self::COLUMN_DESCRIPTION . ',' .
                     self::COLUMN_IMAGE . ' FROM ' . self::TABLE_BOAT .
                     ' WHERE ' . self::COLUMN_BOAT_ID . '=?');
             $stmt->bind_param('i', $boatId);
@@ -1243,6 +1249,29 @@ class DatabaseHelper {
 
     public function isValidAccountType($type) {
         return ($type === AccountType::DIVER OR $type === AccountType::DIVE_SHOP);
+    }
+
+    public function getDiveSitesByName($searchName, $offset = 0) {
+        $response = array('error'=> true, 'message' => 'An error occured while getting dive sites. ');
+        $name = "%" . $searchName . "%";
+        $stmt = $this->conn->prepare('SELECT ' . 
+                self::COLUMN_DIVE_SITE_ID . ',' .
+                self::COLUMN_NAME . ','.
+                self::COLUMN_ADDRESS .
+                ' FROM '. self::TABLE_DIVE_SITE .
+                ' WHERE ' . self::COLUMN_NAME . " LIKE ? LIMIT ?,?");
+        $maxRows = $offset + 10;
+        $stmt->bind_param('sii', $name, $offset, $maxRows);
+        if($stmt->execute()){
+            $result = $stmt->get_result();
+            $response['error'] = false;
+            $response['message'] ='Success';
+            $response['dive_sites'] = array();
+            while($site = $result->fetch_assoc()){
+                $response['dive_sites'][] = $site;
+            }
+        }
+        return $response;
     }
 
 }

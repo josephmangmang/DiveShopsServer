@@ -156,7 +156,6 @@ $app->put('/courses/:courseId', function($courseId) use($app) {
  * Get a list of Dive Site base on location
  */
 $app->get('/sites', function() use($app) {
-    verifyRequiredParams(array('lat', 'lng'));
     $lat = $app->request->params('lat');
     $lng = $app->request->params('lng');
     $radius = $app->request->params('radius');
@@ -168,7 +167,13 @@ $app->get('/sites', function() use($app) {
         $radius = 25;
     }
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveSites($lat, $lng, $radius, $offset);
+    if (isEmpty($lat) && isEmpty($lng)) {
+        verifyRequiredParams(array('q'));
+        $searchName = $app->request->params('q');
+        $response = $databaseHelper->getDiveSitesByName($searchName, $offset);
+    } else {
+        $response = $databaseHelper->getDiveSites($lat, $lng, $radius, $offset);
+    }
     echoResponse(200, $response);
 });
 
@@ -287,10 +292,11 @@ $app->post('/diveshops/:shopUid/courses', function($shopUid) use($app) {
  * Add new boat
  */
 $app->post('/diveshops/:shopUid/boats', function ($shopUid) use ($app) {
-    verifyRequiredParams(array('name'));
+    verifyRequiredParams(array('name', 'description'));
     $name = $app->request->params('name');
+    $description = $app->request->params('description');
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->addBoat($shopUid, $name);
+    $response = $databaseHelper->addBoat($shopUid, $name, $description);
     echoResponse(200, $response);
 });
 
@@ -312,10 +318,11 @@ $app->get('/diveshops/:shopUid/boats', function($shopUid) use ($app) {
  * Update boat
  */
 $app->put('/diveshops/:shopUid/boats/:boatId', function($shopUid, $boatId) use ($app) {
-    verifyRequiredParams(array('name'));
+    verifyRequiredParams(array('name', 'description'));
     $name = $app->request->put('name');
+    $description = $app->request->put('description');
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateBoat($shopUid, $boatId, $name);
+    $response = $databaseHelper->updateBoat($shopUid, $boatId, $name, $description);
     echoResponse(200, $response);
 });
 
