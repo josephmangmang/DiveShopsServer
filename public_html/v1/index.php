@@ -345,11 +345,12 @@ $app->get('/diveshops/:shopUid/trips', function($shopUid) use ($app) {
     $offset = $app->request->params('offset');
     $sort = $app->request->params('sort');
     $order = $app->request->params('order');
+    $diveSiteId = $app->request->params('dive_site_id');
     if (isEmpty($offset)) {
         $offset = 0;
     }
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveShopDiveTrips($shopUid, $startDate, $endData, $offset, $sort, $order);
+    $response = $databaseHelper->getDiveShopDiveTrips($shopUid, $diveSiteId, $startDate, $endData, $offset, $sort, $order);
     echoResponse(200, $response);
 });
 
