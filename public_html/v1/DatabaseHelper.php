@@ -810,6 +810,37 @@ class DatabaseHelper {
         return $response;
     }
 
+    private function getDiveShopBoatsByName($shopId, $offset = 0, $q) {
+        $orderBy = self::COLUMN_NAME;
+        $sort = 'ASC';
+        $name = "%" . $q . "%";
+        
+        $response = array();
+        $sort = $this->getSortType($sort);
+        $query = 'SELECT ' .
+                self::COLUMN_BOAT_ID . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_IMAGE .
+                ' FROM ' . self::TABLE_BOAT .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' . self::COLUMN_NAME . " LIKE ? " .
+                " ORDER BY $orderBy $sort LIMIT ?, ?";
+        $stmt = $this->conn->prepare($query);
+        $maxRow = $offset + 10;
+        $stmt->bind_param('isii', $shopId, $name, $offset, $maxRow);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            while ($boat = $result->fetch_assoc()) {
+                $boat[self::COLUMN_DIVE_SHOP_ID] = $shopId[0];
+                $response[] = $boat;
+            }
+        } else {
+            return $stmt->error;
+        }
+        $stmt->close();
+        return $response;
+    }
+
     /**
      * 
      * @param type $shopId
@@ -1008,7 +1039,7 @@ class DatabaseHelper {
      * @param type $offset
      * @return array
      */
-    public function getBoats($shopUid, $offset = '0') {
+    public function getBoats($shopUid, $offset = '0', $q = '') {
         $response = array('error' => true, 'message' => 'An error occured while getting list of boats.');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
@@ -1019,7 +1050,11 @@ class DatabaseHelper {
             $response['message'] = $response['message'] . ' Invalid offset "' . $offset . '"';
             return $response;
         }
-        $response['boats'] = $this->getDiveShopBoats($shopId[0], $offset);
+        if ($this->isEmpty($q)) {
+            $response['boats'] = $this->getDiveShopBoats($shopId[0], $offset);
+        } else {
+            $response['boats'] = $this->getDiveShopBoatsByName($shopId[0], $offset, $q);
+        }
         if (is_array($response['boats'])) {
             $response['error'] = false;
             $response['message'] = 'Success';

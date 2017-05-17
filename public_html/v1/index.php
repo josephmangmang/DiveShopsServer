@@ -309,8 +309,9 @@ $app->get('/diveshops/:shopUid/boats', function($shopUid) use ($app) {
     if (!isset($offset) || strlen($offset) <= 0) {
         $offset = '0';
     }
+    $q = $app->request->params('q');
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getBoats($shopUid, $offset);
+    $response = $databaseHelper->getBoats($shopUid, $offset, $q);
     echoResponse(200, $response);
 });
 
