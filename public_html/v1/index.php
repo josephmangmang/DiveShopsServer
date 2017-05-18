@@ -391,6 +391,45 @@ $app->put('/diveshops/:shopUid/trips/:tripId', function($shopUid, $tripId) use($
     echoResponse(200, $response);
 });
 
+$app->get('/diveshops/:shopUid/guides', function($shopUid) use($app) {
+    $q = $app->request->params('q');
+    $offset = $app->request->params('offset');
+    if (isEmpty($offset)) {
+        $offset = '0';
+    }
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->getDiveShopGuides($shopUid, $offset, $q);
+    echoResponse(200, $response);
+});
+
+$app->get('/diveshops/:shopUid/guides/:guideId', function($shopUid, $guideId) use($app) {
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->getDiveShopGuide($shopUid, $guideId);
+    echoResponse(200, $response);
+});
+
+$app->post('/diveshops/:shopUid/guides', function($shopUid) use($app) {
+    verifyRequiredParams(array('name'));
+    $name = $app->request->params('name');
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->addGuide($shopUid, $name);
+    echoResponse(200, $response);
+});
+
+$app->put('/diveshops/:shopUid/guides/:guideId', function($shopUid, $guideId) use($app) {
+    verifyRequiredParams(array('name'));
+    $name = $app->request->put('name');
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->updateGuide($shopUid, $guideId, $name);
+    echoResponse(200, $response);
+});
+
+$app->delete('/diveshops/:shopUid/guides/:guideId', function($shopUid, $guideId) {
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->deleteGuide($shopUid, $guideId);
+    echoResponse(200, $response);
+});
+
 /**
  * Verify required parameters before accessing it.
  * 
