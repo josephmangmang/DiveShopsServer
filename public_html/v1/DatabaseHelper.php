@@ -1470,7 +1470,6 @@ class DatabaseHelper {
             return $response;
         }
         $maxRows = $offset + 10;
-        $name = "%" . $q . "%";
         if ($this->isEmpty($q)) {
             $stmt = $this->conn->prepare(
                     'SELECT ' .
@@ -1482,6 +1481,7 @@ class DatabaseHelper {
                     ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? LIMIT ?,?');
             $stmt->bind_param('iii', $shopId[0], $offset, $maxRow);
         } else {
+            $name = "%$q%";
             $stmt = $this->conn->prepare(
                     'SELECT ' .
                     self::COLUMN_GUIDE_ID . ',' .
@@ -1490,8 +1490,12 @@ class DatabaseHelper {
                     self::COLUMN_IMAGE .
                     ' FROM ' . self::TABLE_GUIDE .
                     ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' .
-                    self::COLUMN_NAME . " LIKE $name LIMIT ?,?");
-            $stmt->bind_param('iii', $shopId[0], $offset, $maxRow);
+                    self::COLUMN_NAME . " LIKE ? LIMIT ?,?");
+            if($stmt == FALSE){
+               $response['message'] = $response['message'] . $this->conn->error;
+               return $response;
+            }
+            $stmt->bind_param('isii', $shopId[0], $name, $offset, $maxRow);
         }
         if ($stmt->execute()) {
             $response['error'] = false;

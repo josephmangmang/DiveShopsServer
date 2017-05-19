@@ -402,7 +402,7 @@ $app->get('/diveshops/:shopUid/guides', function($shopUid) use($app) {
     echoResponse(200, $response);
 });
 
-$app->get('/diveshops/:shopUid/guides/:guideId', function($shopUid, $guideId) use($app) {
+    $app->get('/diveshops/:shopUid/guides/:guideId', function($shopUid, $guideId) {
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getDiveShopGuide($shopUid, $guideId);
     echoResponse(200, $response);
