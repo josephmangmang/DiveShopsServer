@@ -58,9 +58,7 @@ class DatabaseHelper {
     const COLUMN_NUMBER_OF_DIVE = 'number_of_dive';
     const COLUMN_DATE = 'date';
     const COLUMN_PRICE_NOTE = 'price_note';
-    const COLUMN_GUIDE_NAME = 'guide_name';
     const COLUMN_COURSE_ID = 'course_id';
-    const COLUMN_PHOTO_COVER = 'photo_cover';
     const COLUMN_OFFERED_BY = 'offered_by';
     const COLUMN_DIVE_SITE_ID = 'dive_site_id';
     const COLUMN_ADDRESS = 'address';
@@ -231,7 +229,7 @@ class DatabaseHelper {
                         self::COLUMN_DIVE_SHOP_ID . ',' .
                         self::COLUMN_NAME . ',' .
                         self::COLUMN_DESCRIPTION . ',' .
-                        self::COLUMN_PHOTO_COVER . ',' .
+                        self::COLUMN_IMAGE . ',' .
                         self::COLUMN_CONTACT_NUMBER . ',' .
                         self::COLUMN_ADDRESS . ',' .
                         self::COLUMN_PRICE_PER_DIVE . ',' .
@@ -280,8 +278,8 @@ class DatabaseHelper {
         }
         $checkFields = $this->requiredParams($tripData, array(
             self::COLUMN_NUMBER_OF_DIVE, self::COLUMN_GROUP_SIZE, self::COLUMN_DATE,
-            self::COLUMN_PRICE, self::COLUMN_PRICE_NOTE, self::TABLE_DAILY_TRIP_DIVE_SITE,
-            self::TABLE_DAILY_TRIP_GUIDE, self::TABLE_DAILY_TRIP_GUEST, self::TABLE_DAILY_TRIP_BOAT
+            self::COLUMN_PRICE, self::COLUMN_PRICE_NOTE, 'daily_trip_dive_sites',
+            'daily_trip_guides', 'daily_trip_boats'
         ));
         if ($checkFields['error']) {
             $response['message'] = $response['message'] . $checkFields['message'];
@@ -295,64 +293,54 @@ class DatabaseHelper {
                 self::COLUMN_PRICE . ',' .
                 self::COLUMN_PRICE_NOTE . ') VALUES (?,?,?,?,?,?)';
         $dailyTripStmt = $this->conn->prepare($query);
-        $dailyTripStmt->bind_param('iiisds', $shopId, $tripData[self::COLUMN_GROUP_SIZE], $tripData[self::COLUMN_NUMBER_OF_DIVE], $tripData[self::COLUMN_DATE], $tripData[self::COLUMN_PRICE], $tripData[self::COLUMN_PRICE_NOTE]);
+        $dailyTripStmt->bind_param('iiisds', 
+                $shopId, 
+                $tripData[self::COLUMN_GROUP_SIZE], 
+                $tripData[self::COLUMN_NUMBER_OF_DIVE], 
+                $tripData[self::COLUMN_DATE],
+                $tripData[self::COLUMN_PRICE], 
+                $tripData[self::COLUMN_PRICE_NOTE]);
         if ($dailyTripStmt->execute()) {
             $dailyTripId = $dailyTripStmt->insert_id;
 
             // insert daily trip dive site
-            $dailyTripDiveSites = $tripData[self::TABLE_DAILY_TRIP_DIVE_SITE];
-            $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_DIVE_SITE . ' (' .
-                    self::COLUMN_DAILY_TRIP_ID . ',' . self::COLUMN_DIVE_SITE_ID . ') VALUES(?,?)';
-            $diveSiteStmt = $this->conn->prepare($query);
-            foreach ($dailyTripDiveSites as $site) {
+            $diveSites = $tripData['daily_trip_dive_sites'];
+            foreach ($diveSites as $site) {
                 if (array_key_exists(self::COLUMN_DIVE_SITE_ID, $site)) {
-                    $diveSiteStmt->bind_param('ii', $dailyTripId, $site[self::COLUMN_DIVE_SITE_ID]);
-                    $diveSiteStmt->execute();
+                    $this->addDailyTripDiveSite($dailyTripId, $site[self::COLUMN_DIVE_SITE_ID]);
                 }
             }
-            $diveSiteStmt->close();
 
             // insert daily trip guides
-            $dailyTripGuides = $tripData[self::TABLE_DAILY_TRIP_GUIDE];
-            $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_GUIDE . ' (' .
-                    self::COLUMN_DAILY_TRIP_ID . ',' .
-                    self::COLUMN_GUIDE_NAME . ') VALUES(?,?)';
-            $guideStmt = $this->conn->prepare($query);
-            foreach ($dailyTripGuides as $guide) {
-                if (array_key_exists(self::COLUMN_GUIDE_NAME, $site)) {
-                    $guideStmt->bind_param('is', $dailyTripId, $guide[self::COLUMN_GUIDE_NAME]);
-                    $guideStmt->execute();
+            $guides = $tripData['daily_trip_guides'];
+            foreach ($guides as $guide) {
+                if (array_key_exists(self::COLUMN_GUIDE_ID, $guide)) {
+                    $this->addDailyTripGuide($dailyTripId, $guide[self::COLUMN_GUIDE_ID]);
                 }
             }
-            $guideStmt->close();
 
-            // insert daily trip guests
-            $dailyTripGuests = $tripData[self::TABLE_DAILY_TRIP_GUEST];
-            $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_GUEST . ' (' .
-                    self::COLUMN_DAILY_TRIP_ID . ',' .
-                    self::COLUMN_DIVER_ID . ') VALUES (?,?)';
-            $guestStmt = $this->conn->prepare($query);
-            foreach ($dailyTripGuests as $guest) {
-                if (array_key_exists(self::COLUMN_DIVER_ID, $site)) {
-                    $guestStmt->bind_param('ii', $dailyTripId, $guest[self::COLUMN_DIVER_ID]);
-                    $guestStmt->execute();
-                }
-            }
-            $guestStmt->close();
-
+            /*
+              // insert daily trip guests
+              $dailyTripGuests = $tripData[self::TABLE_DAILY_TRIP_GUEST];
+              $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_GUEST . ' (' .
+              self::COLUMN_DAILY_TRIP_ID . ',' .
+              self::COLUMN_DIVER_ID . ') VALUES (?,?)';
+              $guestStmt = $this->conn->prepare($query);
+              foreach ($dailyTripGuests as $guest) {
+              if (array_key_exists(self::COLUMN_DIVER_ID, $site)) {
+              $guestStmt->bind_param('ii', $dailyTripId, $guest[self::COLUMN_DIVER_ID]);
+              $guestStmt->execute();
+              }
+              }
+              $guestStmt->close();
+             */
             // insert daily trip boat
-            $dailtyTripBoats = $tripData[self::TABLE_DAILY_TRIP_BOAT];
-            $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_BOAT . ' (' .
-                    self::COLUMN_DAILY_TRIP_ID . ',' .
-                    self::COLUMN_BOAT_ID . ') VALUES (?,?)';
-            $boatStmt = $this->conn->prepare($query);
-            foreach ($dailtyTripBoats as $boat) {
-                if (array_key_exists(self::COLUMN_BOAT_ID, $site)) {
-                    $boatStmt->bind_param('ii', $dailyTripId, $boat[self::COLUMN_BOAT_ID]);
-                    $boatStmt->execute();
+            $boats = $tripData['daily_trip_boats'];
+            foreach ($boats as $boat) {
+                if (array_key_exists(self::COLUMN_BOAT_ID, $boat)) {
+                    $this->addDailyTripBoat($dailyTripId, $boat[self::COLUMN_BOAT_ID]);
                 }
             }
-            $boatStmt->close();
             $response['error'] = false;
             $response['message'] = 'Daily Trip successfully added.';
         }
@@ -478,7 +466,7 @@ class DatabaseHelper {
                 self::COLUMN_COURSE_ID . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
-                self::COLUMN_PHOTO_COVER . ',' .
+                self::COLUMN_IMAGE . ',' .
                 self::COLUMN_OFFERED_BY .
                 ' FROM ' . self::TABLE_COURSE .
                 " ORDER BY $orderBy $sort LIMIT ?,?";
@@ -705,7 +693,7 @@ class DatabaseHelper {
                 self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
-                self::COLUMN_PHOTO_COVER . ',' .
+                self::COLUMN_IMAGE . ',' .
                 self::COLUMN_CONTACT_NUMBER . ',' .
                 self::COLUMN_ADDRESS . ',' .
                 self::COLUMN_PRICE_PER_DIVE . ',' .
@@ -754,7 +742,7 @@ class DatabaseHelper {
                 self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
-                self::COLUMN_PHOTO_COVER . ',' .
+                self::COLUMN_IMAGE . ',' .
                 self::COLUMN_CONTACT_NUMBER . ',' .
                 self::COLUMN_ADDRESS . ',' .
                 self::COLUMN_PRICE_PER_DIVE . ',' .
@@ -860,7 +848,7 @@ class DatabaseHelper {
                 self::COLUMN_PRICE . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
-                self::COLUMN_PHOTO_COVER . ',' .
+                self::COLUMN_IMAGE . ',' .
                 self::COLUMN_OFFERED_BY .
                 ' FROM ' . self::TABLE_DIVE_SHOP_COURSE .
                 ' INNER JOIN ' . self::TABLE_COURSE . ' ON ' .
@@ -961,7 +949,7 @@ class DatabaseHelper {
         $response = array();
         $stmt = $this->conn->prepare('SELECT ' .
                 self::COLUMN_DAILY_TRIP_GUIDE_ID . ',' .
-                self::COLUMN_GUIDE_NAME .
+                self::COLUMN_NAME .
                 ' FROM ' . self::TABLE_DAILY_TRIP_GUIDE .
                 ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?');
         $stmt->bind_param('i', $tripId);
@@ -1177,7 +1165,7 @@ class DatabaseHelper {
                     self::COLUMN_COURSE_ID . ',' .
                     self::COLUMN_NAME . ',' .
                     self::COLUMN_DESCRIPTION . ',' .
-                    self::COLUMN_PHOTO_COVER . ',' .
+                    self::COLUMN_IMAGE . ',' .
                     self::COLUMN_OFFERED_BY .
                     ' FROM ' . self::TABLE_COURSE . ' WHERE ' . self::COLUMN_COURSE_ID . '=?');
             $stmt->bind_param('i', $courseId);
@@ -1367,11 +1355,14 @@ class DatabaseHelper {
     public function getDailyTripGuides($tripId) {
         $guides = array();
         $query = 'SELECT ' .
-                self::COLUMN_DAILY_TRIP_ID . ',' .
-                self::COLUMN_DAILY_TRIP_GUIDE_ID . ',' .
-                self::COLUMN_GUIDE_NAME .
-                ' FROM ' . self::TABLE_DAILY_TRIP_GUIDE .
-                ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?';
+                't.' . self::COLUMN_DAILY_TRIP_ID . ',' .
+                't.' . self::COLUMN_DAILY_TRIP_GUIDE_ID . ',' .
+                'g.' . self::COLUMN_NAME . ',' .
+                'g.' . self::COLUMN_IMAGE .
+                ' FROM ' . self::TABLE_DAILY_TRIP_GUIDE . ' t' .
+                ' INNER JOIN ' . self::TABLE_GUIDE . ' g' .
+                ' ON t.' . self::COLUMN_GUIDE_ID . '= g.' . self::COLUMN_GUIDE_ID .
+                ' WHERE t.' . self::COLUMN_DAILY_TRIP_ID . '=?';
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param('i', $tripId);
         if ($stmt->execute()) {
@@ -1491,9 +1482,9 @@ class DatabaseHelper {
                     ' FROM ' . self::TABLE_GUIDE .
                     ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' .
                     self::COLUMN_NAME . " LIKE ? LIMIT ?,?");
-            if($stmt == FALSE){
-               $response['message'] = $response['message'] . $this->conn->error;
-               return $response;
+            if ($stmt == FALSE) {
+                $response['message'] = $response['message'] . $this->conn->error;
+                return $response;
             }
             $stmt->bind_param('isii', $shopId[0], $name, $offset, $maxRow);
         }
@@ -1593,6 +1584,35 @@ class DatabaseHelper {
             $response['message'] = 'Success';
         }
         return $response;
+    }
+
+    public function addDailyTripDiveSite($dailyTripId, $diveSiteId) {
+        $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_DIVE_SITE . ' (' .
+                self::COLUMN_DAILY_TRIP_ID . ',' . self::COLUMN_DIVE_SITE_ID . ') VALUES(?,?)';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('ii', $dailyTripId, $diveSiteId);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    public function addDailyTripGuide($dailyTripId, $guideId) {
+        $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_GUIDE . ' (' .
+                self::COLUMN_DAILY_TRIP_ID . ',' .
+                self::COLUMN_GUIDE_ID . ') VALUES(?,?)';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('ii', $dailyTripId, $guideId);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    public function addDailyTripBoat($dailyTripId, $boatId) {
+        $query = 'INSERT INTO ' . self::TABLE_DAILY_TRIP_BOAT . ' (' .
+                self::COLUMN_DAILY_TRIP_ID . ',' .
+                self::COLUMN_BOAT_ID . ') VALUES (?,?)';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('ii', $dailyTripId, $boatId);
+        $stmt->execute();
+        $stmt->close();
     }
 
 }
