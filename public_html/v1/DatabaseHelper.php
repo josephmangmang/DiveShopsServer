@@ -1252,6 +1252,7 @@ class DatabaseHelper {
                     self::COLUMN_GROUP_SIZE . ',' .
                     self::COLUMN_NUMBER_OF_DIVE . ',' .
                     self::COLUMN_DATE . ',' .
+                    self::COLUMN_CREATE_TIME . ','.
                     self::COLUMN_PRICE . ',' .
                     self::COLUMN_PRICE_NOTE .
                     ' FROM ' . self::TABLE_DAILY_TRIP .
