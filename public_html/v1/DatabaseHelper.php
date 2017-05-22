@@ -293,13 +293,7 @@ class DatabaseHelper {
                 self::COLUMN_PRICE . ',' .
                 self::COLUMN_PRICE_NOTE . ') VALUES (?,?,?,?,?,?)';
         $dailyTripStmt = $this->conn->prepare($query);
-        $dailyTripStmt->bind_param('iiisds', 
-                $shopId, 
-                $tripData[self::COLUMN_GROUP_SIZE], 
-                $tripData[self::COLUMN_NUMBER_OF_DIVE], 
-                $tripData[self::COLUMN_DATE],
-                $tripData[self::COLUMN_PRICE], 
-                $tripData[self::COLUMN_PRICE_NOTE]);
+        $dailyTripStmt->bind_param('iiisds', $shopId, $tripData[self::COLUMN_GROUP_SIZE], $tripData[self::COLUMN_NUMBER_OF_DIVE], $tripData[self::COLUMN_DATE], $tripData[self::COLUMN_PRICE], $tripData[self::COLUMN_PRICE_NOTE]);
         if ($dailyTripStmt->execute()) {
             $dailyTripId = $dailyTripStmt->insert_id;
 
@@ -1252,7 +1246,7 @@ class DatabaseHelper {
                     self::COLUMN_GROUP_SIZE . ',' .
                     self::COLUMN_NUMBER_OF_DIVE . ',' .
                     self::COLUMN_DATE . ',' .
-                    self::COLUMN_CREATE_TIME . ','.
+                    self::COLUMN_CREATE_TIME . ',' .
                     self::COLUMN_PRICE . ',' .
                     self::COLUMN_PRICE_NOTE .
                     ' FROM ' . self::TABLE_DAILY_TRIP .
@@ -1614,6 +1608,25 @@ class DatabaseHelper {
         $stmt->bind_param('ii', $dailyTripId, $boatId);
         $stmt->execute();
         $stmt->close();
+    }
+
+    public function deleteDiveShopDailyTrips($shopUid, $dailyTripIds) {
+        $response = array('error' => true, 'message' => 'An error occurred while deleting daily trips. ');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid dive shop id.';
+            return $response;
+        }
+        $ids = implode(',', $dailyTripIds);
+        $stmt = $this->conn->prepare('DELETE FROM ' .
+                self::TABLE_DAILY_TRIP .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' . self::COLUMN_DAILY_TRIP_ID . ' IN (?)');
+        $stmt->bind_param('is', $shopId[0], $ids);
+        if($stmt->execute()){
+            $response['error'] = false;
+            $response['message'] = 'Success';
+        }
+        return $response;
     }
 
 }

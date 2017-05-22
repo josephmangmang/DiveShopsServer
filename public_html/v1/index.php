@@ -355,6 +355,12 @@ $app->get('/diveshops/:shopUid/trips', function($shopUid) use ($app) {
     echoResponse(200, $response);
 });
 
+$app->delete('/diveshops/:shopUid/trips', function($shopUid) use($app) {
+    $dailyTripIds = $app->request->params('daily_trip_ids');
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->deleteDiveShopDailyTrips($shopUid, $dailyTripIds);
+    echoResponse(200, $response);
+});
 /** Done
  * Add new Daily Trip
  * 
@@ -402,7 +408,7 @@ $app->get('/diveshops/:shopUid/guides', function($shopUid) use($app) {
     echoResponse(200, $response);
 });
 
-    $app->get('/diveshops/:shopUid/guides/:guideId', function($shopUid, $guideId) {
+$app->get('/diveshops/:shopUid/guides/:guideId', function($shopUid, $guideId) {
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->getDiveShopGuide($shopUid, $guideId);
     echoResponse(200, $response);
