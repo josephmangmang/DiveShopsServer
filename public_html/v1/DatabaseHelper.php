@@ -396,7 +396,7 @@ class DatabaseHelper {
      * Update Dive Shop Daily Trip
      * 
      * @param type $shopUid
-     * @param type $tripId
+     * @param type $dailyTripId
      * @param type $groupSize
      * @param type $numberOfDive
      * @param type $date
@@ -404,13 +404,19 @@ class DatabaseHelper {
      * @param type $priceNote
      * @return array
      */
-    public function updateDiveShopTrip($shopUid, $tripId, $groupSize, $numberOfDive, $date, $price, $priceNote) {
+    public function updateDiveShopTrip($shopUid, $dailyTripId, $dailyTripJson) {
         $response = array('error' => true, 'message' => 'An error occured while updating Dive Shop Trip. ');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
             $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
             return $response;
         }
+        $tripData = json_decode($dailyTripJson, true);
+        if (is_null($tripData)) {
+            $response['message'] = $response['message'] . 'Invalid Dive Trip data.';
+            return $response;
+        }
+
         $query = 'UPDATE ' . self::TABLE_DAILY_TRIP .
                 ' SET ' .
                 self::COLUMN_GROUP_SIZE . '= ?,' .
@@ -421,24 +427,43 @@ class DatabaseHelper {
                 ' WHERE ' .
                 self::COLUMN_DAILY_TRIP_ID . '=? AND ' . self::COLUMN_DIVE_SHOP_ID . '=?';
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param('iisdsii', $groupSize, $numberOfDive, $date, $price, $priceNote, $tripId, $shopId[0]);
-        if ($stmt->execute()) {
-            $response['error'] = false;
-            $response['message'] = 'Daily Trip successfully updated. ';
-            if ($stmt->affected_rows < 1) {
-                $response['message'] = 'Nothing changed on Daily Trip.';
-            }
-            $response['daily_trip'] = array(
-                self::COLUMN_DAILY_TRIP_ID => $tripId,
-                self::COLUMN_DIVE_SHOP_ID => $shopId[0],
-                self::COLUMN_GROUP_SIZE => $groupSize,
-                self::COLUMN_NUMBER_OF_DIVE => $numberOfDive,
-                self::COLUMN_DATE => $date,
-                self::COLUMN_PRICE => $price,
-                self::COLUMN_PRICE_NOTE => $priceNote
-            );
-        }
+        $stmt->bind_param('iisdsii', $tripData[self::COLUMN_GROUP_SIZE], $tripData[self::COLUMN_NUMBER_OF_DIVE], $tripData[self::COLUMN_DATE], $tripData[self::COLUMN_PRICE], $tripData[self::COLUMN_PRICE_NOTE], $dailyTripId, $shopId[0]);
+        $stmt->execute();
         $stmt->close();
+        // boats
+        $boats = $tripData['daily_trip_boats'];
+        $this->deleteDailyTripBoatsByTrip($dailyTripId);
+
+        foreach ($boats as $boat) {
+            if (array_key_exists(self::COLUMN_BOAT_ID, $boat)) {
+                $this->addDailyTripBoat($dailyTripId, $boat[self::COLUMN_BOAT_ID]);
+            }
+        }
+        // guides
+        $guides = $tripData['daily_trip_guides'];
+        $this->deleteDailyTripGuideByTrip($dailyTripId);
+        foreach ($guides as $guide) {
+            //insert
+            if (array_key_exists(self::COLUMN_GUIDE_ID, $guide)) {
+                $this->addDailyTripGuide($dailyTripId, $guide[self::COLUMN_GUIDE_ID]);
+            }
+        }
+        // sites
+        $sites = $tripData['daily_trip_dive_sites'];
+        $this->deleteDailyTripDiveSiteByTrip($dailyTripId);
+        foreach ($sites as $site) {
+            //insert
+            if (array_key_exists(self::COLUMN_DIVE_SITE_ID, $site)) {
+                $this->addDailyTripDiveSite($dailyTripId, $site[self::COLUMN_DIVE_SITE_ID]);
+            }
+        }
+        // guest
+        // todo not recommended
+        // $guests = $tripData['daily_trip_guests'];
+
+        $response[self::TABLE_DAILY_TRIP] = $this->getDiveShopDiveTrip($shopUid, $dailyTripId);
+        $response['error'] = false;
+        $response['message'] = 'Success';
         return $response;
     }
 
@@ -1622,11 +1647,94 @@ class DatabaseHelper {
                 self::TABLE_DAILY_TRIP .
                 ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' . self::COLUMN_DAILY_TRIP_ID . ' IN (?)');
         $stmt->bind_param('is', $shopId[0], $ids);
-        if($stmt->execute()){
+        if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = 'Success';
         }
         return $response;
+    }
+
+    public function updateDailyTripBoat($dailyTripId, $tripBoatId, $boatId) {
+        $stmt = $this->conn->prepare('UPDATE ' . self::TABLE_DAILY_TRIP_BOAT .
+                ' SET ' . self::COLUMN_BOAT_ID . '=? WHERE ' .
+                self::COLUMN_DAILY_TRIP_ID . '=? AND ' . self::COLUMN_DAILY_TRIP_BOAT_ID . '=?');
+        $stmt->bind_param('iii', $boatId, $dailyTripId, $tripBoatId);
+        $stmt->execute();
+    }
+
+    public function updateDailyTripGuide($dailyTripId, $tripGuideId, $guideId) {
+        $stmt = $this->conn->prepare('UPDATE ' . self::TABLE_DAILY_TRIP_GUIDE .
+                ' SET ' . self::COLUMN_GUIDE_ID . '=? WHERE ' .
+                self::COLUMN_DAILY_TRIP_ID . '=? AND ' . self::COLUMN_DAILY_TRIP_GUIDE_ID . '=?');
+        $stmt->bind_param('iii', $guideId, $dailyTripId, $tripGuideId);
+        $stmt->execute();
+    }
+
+    public function updateDailyTripDiveSite($dailyTripId, $tripDiveSiteId, $diveSiteId) {
+        $stmt = $this->conn->prepare('UPDATE ' . self::TABLE_DAILY_TRIP_DIVE_SITE .
+                ' SET ' . self::COLUMN_DIVE_SITE_ID . '=? WHERE ' .
+                self::COLUMN_DAILY_TRIP_ID . '=? AND ' . self::COLUMN_DAILY_TRIP_DIVE_SITE_ID . '=?');
+        $stmt->bind_param('iii', $guideId, $dailyTripId, $tripDiveSiteId);
+        $stmt->execute();
+    }
+
+    public function getDiveShopDiveTrip($shopUid, $dailyTripId) {
+        $response = array();
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            return false;
+        }
+        $query = 'SELECT ' .
+                self::COLUMN_DAILY_TRIP_ID . ',' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_GROUP_SIZE . ',' .
+                self::COLUMN_NUMBER_OF_DIVE . ',' .
+                self::COLUMN_DATE . ',' .
+                self::COLUMN_CREATE_TIME . ',' .
+                self::COLUMN_PRICE . ',' .
+                self::COLUMN_PRICE_NOTE .
+                ' FROM ' . self::TABLE_DAILY_TRIP .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' .
+                self::COLUMN_DAILY_TRIP_ID . "=?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('ii', $shopId[0], $dailyTripId);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $response = $result->fetch_assoc();
+            $response[self::COLUMN_DIVE_SHOP_ID] = $shopUid;
+            $response['daily_trip_boats'] = $this->getDailyTripBoats($response[self::COLUMN_DAILY_TRIP_ID]);
+            $response['daily_trip_guides'] = $this->getDailyTripGuides($response[self::COLUMN_DAILY_TRIP_ID]);
+            $response['daily_trip_dive_sites'] = $this->getDailyTripDiveSites($response[self::COLUMN_DAILY_TRIP_ID]);
+            $response['daily_trip_guests'] = $this->getDailyTripGuests($response[self::COLUMN_DAILY_TRIP_ID]);
+        }
+        return $response;
+    }
+
+    public function deleteDailyTripBoatsByTrip($dailyTripId) {
+        $stmt = $this->conn->prepare(
+                'DELETE FROM ' . self::TABLE_DAILY_TRIP_BOAT .
+                ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?');
+        $stmt->bind_param('i', $dailyTripId);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    public function deleteDailyTripGuideByTrip($dailyTripId) {
+        $stmt = $this->conn->prepare(
+                'DELETE FROM ' . self::TABLE_DAILY_TRIP_GUIDE .
+                ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?');
+        $stmt->bind_param('i', $dailyTripId);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    public function deleteDailyTripDiveSiteByTrip($dailyTripId) {
+        $stmt = $this->conn->prepare(
+                'DELETE FROM ' . self::TABLE_DAILY_TRIP_DIVE_SITE .
+                ' WHERE ' . self::COLUMN_DAILY_TRIP_ID . '=?');
+        $stmt->bind_param('i', $dailyTripId);
+        $stmt->execute();
+        $stmt->close();
     }
 
 }

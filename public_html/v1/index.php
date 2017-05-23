@@ -384,16 +384,9 @@ $app->post('/diveshops/:shopUid/trips', function($shopUid) use($app) {
  * 'price_note'     string      special notes for the listed price,
  */
 $app->put('/diveshops/:shopUid/trips/:tripId', function($shopUid, $tripId) use($app) {
-    $requiredParams = array('group_size', 'number_of_dive', 'date', 'price', 'price_note');
-    verifyRequiredParams($requiredParams);
-    $groupSize = $app->request->put($requiredParams[0]);
-    $numberOfDive = $app->request->put($requiredParams[1]);
-    $date = $app->request->put($requiredParams[2]);
-    $price = $app->request->put($requiredParams[3]);
-    $priceNote = $app->request->put($requiredParams[4]);
-
+    $dailyTripJson = $app->request->getBody();
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateDiveShopTrip($shopUid, $tripId, $groupSize, $numberOfDive, $date, $price, $priceNote);
+    $response = $databaseHelper->updateDiveShopTrip($shopUid, $tripId, $dailyTripJson);
     echoResponse(200, $response);
 });
 
