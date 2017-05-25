@@ -397,7 +397,7 @@ $app->get('/diveshops/:shopUid/guides', function($shopUid) use($app) {
         $offset = '0';
     }
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveShopGuides($shopUid, $offset, $q);
+    $response = $databaseHelper->getGuides($shopUid, $offset, $q);
     echoResponse(200, $response);
 });
 
@@ -408,18 +408,20 @@ $app->get('/diveshops/:shopUid/guides/:guideId', function($shopUid, $guideId) {
 });
 
 $app->post('/diveshops/:shopUid/guides', function($shopUid) use($app) {
-    verifyRequiredParams(array('name'));
+    verifyRequiredParams(array('name', 'description'));
     $name = $app->request->params('name');
+    $description = $app->request->params('description');
     $databaseHelper = new DatabaseHelper();
     $response = $databaseHelper->addGuide($shopUid, $name);
     echoResponse(200, $response);
 });
 
 $app->put('/diveshops/:shopUid/guides/:guideId', function($shopUid, $guideId) use($app) {
-    verifyRequiredParams(array('name'));
+    verifyRequiredParams(array('name', 'description'));
     $name = $app->request->put('name');
+    $description = $app->request->put('description');
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateGuide($shopUid, $guideId, $name);
+    $response = $databaseHelper->updateGuide($shopUid, $guideId, $name, $description);
     echoResponse(200, $response);
 });
 

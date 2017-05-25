@@ -369,7 +369,7 @@ class DatabaseHelper {
                 $stmt->bind_result($tripId, $shopId, $groupSize, $numberOfDive, $date, $price);
                 $stmt->fetch();
                 $response[$i] = array('trip_id' => $tripId, 'shop_id' => $shopId, 'group_size' => $groupSize, 'number_of_dive' => $numberOfDive, 'date' => $date, 'price' => $price);
-                $response[$i]['guides'] = $this->getGuides($tripId);
+                $response[$i]['guides'] = $this->getGuidesByTripId($tripId);
                 $response[$i]['sites'] = $this->getDiveSitesByTripId($tripId);
                 $response[$i]['guest'] = $this->getGuestsByTripId($tripId);
             }
@@ -778,6 +778,7 @@ class DatabaseHelper {
             $response['dive_shop'][self::COLUMN_DIVE_SHOP_ID] = $shopUid;
             $response['dive_shop']['courses'] = $this->getDiveShopCoursesList($shopId[0]);
             $response['dive_shop']['boats'] = $this->getDiveShopBoats($shopId[0]);
+            $response['dive_shop']['guides'] = $this->getDiveShopGuides($shopId[0]);
             $response['error'] = false;
             $response['message'] = 'Success';
         }
@@ -808,8 +809,9 @@ class DatabaseHelper {
         $stmt->bind_param('iii', $shopId, $offset, $maxRow);
         if ($stmt->execute()) {
             $result = $stmt->get_result();
+            $shopUid = $this->hashids->encode($shopId);
             while ($boat = $result->fetch_assoc()) {
-                $boat[self::COLUMN_DIVE_SHOP_ID] = $shopId[0];
+                $boat[self::COLUMN_DIVE_SHOP_ID] = $shopUid;
                 $response[] = $boat;
             }
         } else {
@@ -839,8 +841,9 @@ class DatabaseHelper {
         $stmt->bind_param('isii', $shopId, $name, $offset, $maxRow);
         if ($stmt->execute()) {
             $result = $stmt->get_result();
+            $shopUid = $this->hashids->encode($shopId);
             while ($boat = $result->fetch_assoc()) {
-                $boat[self::COLUMN_DIVE_SHOP_ID] = $shopId[0];
+                $boat[self::COLUMN_DIVE_SHOP_ID] = $shopUid;
                 $response[] = $boat;
             }
         } else {
@@ -964,7 +967,7 @@ class DatabaseHelper {
      * @param type $tripId
      * @return array List of guides
      */
-    public function getGuides($tripId) {
+    public function getGuidesByTripId($tripId) {
         $response = array();
         $stmt = $this->conn->prepare('SELECT ' .
                 self::COLUMN_DAILY_TRIP_GUIDE_ID . ',' .
@@ -1378,6 +1381,7 @@ class DatabaseHelper {
                 't.' . self::COLUMN_DAILY_TRIP_ID . ',' .
                 't.' . self::COLUMN_DAILY_TRIP_GUIDE_ID . ',' .
                 'g.' . self::COLUMN_NAME . ',' .
+                'g.' . self::COLUMN_DESCRIPTION . ',' .
                 'g.' . self::COLUMN_IMAGE .
                 ' FROM ' . self::TABLE_DAILY_TRIP_GUIDE . ' t' .
                 ' INNER JOIN ' . self::TABLE_GUIDE . ' g' .
@@ -1456,6 +1460,7 @@ class DatabaseHelper {
                 self::COLUMN_GUIDE_ID . ',' .
                 self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
                 self::COLUMN_IMAGE .
                 ' FROM ' . self::TABLE_GUIDE .
                 ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' . self::COLUMN_GUIDE_ID . '=?');
@@ -1472,7 +1477,7 @@ class DatabaseHelper {
         return $response;
     }
 
-    public function getDiveShopGuides($shopUid, $offset = '0', $q = '') {
+    public function getGuides($shopUid, $offset = '0', $q = '') {
         $response = array('error' => true, 'message' => 'An error occured while getting guide list. ');
 
         $shopId = $this->hashids->decode($shopUid);
@@ -1480,48 +1485,21 @@ class DatabaseHelper {
             $response['message'] = $response['message'] . 'Invalid dive shop id';
             return $response;
         }
-        $maxRows = $offset + 10;
         if ($this->isEmpty($q)) {
-            $stmt = $this->conn->prepare(
-                    'SELECT ' .
-                    self::COLUMN_GUIDE_ID . ',' .
-                    self::COLUMN_DIVE_SHOP_ID . ',' .
-                    self::COLUMN_NAME . ',' .
-                    self::COLUMN_IMAGE .
-                    ' FROM ' . self::TABLE_GUIDE .
-                    ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? LIMIT ?,?');
-            $stmt->bind_param('iii', $shopId[0], $offset, $maxRow);
+            $response['guides'] = $this->getDiveShopGuides($shopId[0], $offset);
         } else {
-            $name = "%$q%";
-            $stmt = $this->conn->prepare(
-                    'SELECT ' .
-                    self::COLUMN_GUIDE_ID . ',' .
-                    self::COLUMN_DIVE_SHOP_ID . ',' .
-                    self::COLUMN_NAME . ',' .
-                    self::COLUMN_IMAGE .
-                    ' FROM ' . self::TABLE_GUIDE .
-                    ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' .
-                    self::COLUMN_NAME . " LIKE ? LIMIT ?,?");
-            if ($stmt == FALSE) {
-                $response['message'] = $response['message'] . $this->conn->error;
-                return $response;
-            }
-            $stmt->bind_param('isii', $shopId[0], $name, $offset, $maxRow);
+            $response['guides'] = $this->getDiveShopGuidesByName($shopId[0], $offset, $q);
         }
-        if ($stmt->execute()) {
+        if (is_array($response['guides'])) {
             $response['error'] = false;
             $response['message'] = 'Success';
-            $response['guides'] = array();
-            $result = $stmt->get_result();
-            while ($guide = $result->fetch_assoc()) {
-                $guide[self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($guide[self::COLUMN_DIVE_SHOP_ID]);
-                $response['guides'][] = $guide;
-            }
+        } else {
+            $response['message'] = $response['message'] . $response['message'];
         }
         return $response;
     }
 
-    public function addGuide($shopUid, $name) {
+    public function addGuide($shopUid, $name, $description) {
         $response = array('error' => true, 'message' => 'An error occurred while adding guide. ');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
@@ -1531,8 +1509,8 @@ class DatabaseHelper {
 
         $stmt = $this->conn->prepare('INSERT INTO ' .
                 self::TABLE_GUIDE . '(' . self::COLUMN_NAME . ','
-                . self::COLUMN_DIVE_SHOP_ID . ') VALUES(?,?)');
-        $stmt->bind_param('si', $name, $shopId[0]);
+                . self::COLUMN_DIVE_SHOP_ID . ',' . self::COLUMN_DESCRIPTION . ') VALUES(?,?,?)');
+        $stmt->bind_param('si', $name, $shopId[0], $description);
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = 'Success';
@@ -1547,6 +1525,7 @@ class DatabaseHelper {
                 $guide = array(
                     self::COLUMN_GUIDE_ID => $guideId,
                     self::COLUMN_NAME => $name,
+                    self::COLUMN_DESCRIPTION => $description,
                     self::COLUMN_IMAGE => $image,
                     self::COLUMN_DIVE_SHOP_ID => $shopUid
                 );
@@ -1556,7 +1535,7 @@ class DatabaseHelper {
         return $response;
     }
 
-    public function updateGuide($shopUid, $guideId, $name) {
+    public function updateGuide($shopUid, $guideId, $name, $description) {
         $response = array('error' => false, 'message' => 'An error occurred while updating guide. ');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
@@ -1564,9 +1543,9 @@ class DatabaseHelper {
         }
         $stmt = $this->conn->prepare(
                 'UPDATE ' . self::TABLE_GUIDE .
-                ' SET ' . self::COLUMN_NAME . '=? WHERE '
+                ' SET ' . self::COLUMN_NAME . '=?,' . self::COLUMN_DESCRIPTION . '=? WHERE '
                 . self::COLUMN_DIVE_SHOP_ID . '=? AND ' . self::COLUMN_GUIDE_ID . '=?');
-        $stmt->bind_param('sii', $name, $shopId[0], $guideId);
+        $stmt->bind_param('sii', $name, $description, $shopId[0], $guideId);
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = 'Success';
@@ -1580,6 +1559,7 @@ class DatabaseHelper {
                 $guide = array(
                     self::COLUMN_GUIDE_ID => $guideId,
                     self::COLUMN_NAME => $name,
+                    self::COLUMN_DESCRIPTION => $description,
                     self::COLUMN_IMAGE => $image,
                     self::COLUMN_DIVE_SHOP_ID => $shopUid
                 );
@@ -1735,6 +1715,67 @@ class DatabaseHelper {
         $stmt->bind_param('i', $dailyTripId);
         $stmt->execute();
         $stmt->close();
+    }
+
+    public function getDiveShopGuides($shopId, $offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
+        $response = array();
+        $stmt = $this->conn->prepare(
+                'SELECT ' .
+                self::COLUMN_GUIDE_ID . ',' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_IMAGE .
+                ' FROM ' . self::TABLE_GUIDE .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=?' .
+                " ORDER BY $orderBy $sort LIMIT ?, ?");
+        $maxRow = $offset + 10;
+        $stmt->bind_param('iii', $shopId, $offset, $maxRow);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $shopUid = $this->hashids->encode($shopId);
+            while ($guide = $result->fetch_assoc()) {
+                $guide[self::COLUMN_DIVE_SHOP_ID] = $shopUid;
+                $response[] = $guide;
+            }
+        } else {
+            $response['message'] = $stmt->error;
+            return $response;
+        }
+        $stmt->close();
+        return $response;
+    }
+
+    public function getDiveShopGuidesByName($shopId, $offset = 0, $q) {
+        $response = array();
+        $orderBy = self::COLUMN_NAME;
+        $sort = 'ASC';
+        $name = "%$q%";
+        $stmt = $this->conn->prepare(
+                'SELECT ' .
+                self::COLUMN_GUIDE_ID . ',' .
+                self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_IMAGE .
+                ' FROM ' . self::TABLE_GUIDE .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' .
+                self::COLUMN_NAME . " LIKE ? ORDER BY $orderBy $sort LIMIT ?, ?");
+        $maxRow = $offset + 10;
+        $stmt->bind_param('isii', $shopId, $name, $offset, $maxRow);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $shopUid = $this->hashids->encode($shopId);
+            while ($guide = $result->fetch_assoc()) {
+                $guide[self::COLUMN_DIVE_SHOP_ID] = $shopUid;
+                $response[] = $guide;
+            }
+        } else {
+            $response['message'] = $stmt->error;
+            return $response;
+        }
+        $stmt->close();
+        return $response;
     }
 
 }
