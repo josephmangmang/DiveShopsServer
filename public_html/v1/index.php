@@ -267,11 +267,12 @@ $app->get('/diveshops/:shopUid/courses', function($shopUid) use ($app) {
  * Update Dive Shop course
  */
 $app->put('/diveshops/:shopUid/courses/:shopCourseId', function($shopUid, $shopCourseId) use($app) {
-    $requiredParams = array('price');
+    $requiredParams = array('price', 'course_id');
     verifyRequiredParams($requiredParams);
     $price = $app->request->put($requiredParams[0]);
+    $courseId = $app->request->put($requiredParams[1]);
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateDiveShopCourse($shopUid, $shopCourseId, $price);
+    $response = $databaseHelper->updateDiveShopCourse($shopUid, $shopCourseId, $courseId, $price);
     echoResponse(200, $response);
 });
 /** Done

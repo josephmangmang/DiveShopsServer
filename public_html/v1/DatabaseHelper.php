@@ -972,7 +972,7 @@ class DatabaseHelper {
      * @param type $price
      * @return array
      */
-    public function updateDiveShopCourse($shopUid, $shopCourseId, $price) {
+    public function updateDiveShopCourse($shopUid, $shopCourseId, $courseId, $price) {
         $response = array('error' => true, 'message' => 'An error occured while updating Dive Shop Course. ');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
@@ -985,10 +985,10 @@ class DatabaseHelper {
         }
         $stmt = $this->conn->prepare(
                 'UPDATE ' . self::TABLE_DIVE_SHOP_COURSE . ' SET ' .
-                self::COLUMN_PRICE . '=? WHERE ' .
-                self::COLUMN_DIVE_SHOP_COURSE_ID . '=? AND ' .
+                self::COLUMN_PRICE . '=?,' . self::COLUMN_COURSE_ID .
+                '=? WHERE ' . self::COLUMN_DIVE_SHOP_COURSE_ID . '=? AND ' .
                 self::COLUMN_DIVE_SHOP_ID . '=?');
-        $stmt->bind_param('dii', $price, $shopCourseId, $shopId[0]);
+        $stmt->bind_param('diii', $price, $courseId, $shopCourseId, $shopId[0]);
         if ($stmt->execute()) {
             $response['error'] = true;
             if ($stmt->affected_rows < 1) {
@@ -996,6 +996,8 @@ class DatabaseHelper {
             } else {
                 $response['message'] = 'Successfully updated';
             }
+        } else if (strpos($stmt->error, 'Duplicate') !== false) {
+            $response['message'] = $response['message'] . 'Course already exist';
         }
         $stmt->close();
         return $response;
