@@ -474,34 +474,73 @@ class DatabaseHelper {
      * @param type $sort
      * @return array 
      */
-    public function getCourses($offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC') {
-        $response = array('error' => true, 'message' => 'An error occured while getting Course list. ');
-        $sort = $this->getSortType($sort);
-        if ($orderBy !== self::COLUMN_NAME && $orderBy !== self::COLUMN_OFFERED_BY) {
-            $response['message'] = $response['message'] . 'Only order by name or offered_by is allowed.';
-            return $response;
+    public function getCourses($offset = 0, $orderBy = self::COLUMN_NAME, $sort = 'ASC', $q) {
+        $response = array('error' => true, 'message' => 'An error occured while getting list of course.');
+
+
+        if ($this->isEmpty($q)) {
+            $sort = $this->getSortType($sort);
+            if ($orderBy !== self::COLUMN_NAME && $orderBy !== self::COLUMN_OFFERED_BY) {
+                $response['message'] = $response['message'] . 'Only order by name or offered_by is allowed.';
+                return $response;
+            }
+            $query = 'SELECT ' .
+                    self::COLUMN_COURSE_ID . ',' .
+                    self::COLUMN_NAME . ',' .
+                    self::COLUMN_DESCRIPTION . ',' .
+                    self::COLUMN_IMAGE . ',' .
+                    self::COLUMN_OFFERED_BY .
+                    ' FROM ' . self::TABLE_COURSE .
+                    " ORDER BY $orderBy $sort LIMIT ?,?";
+            $stmt = $this->conn->prepare($query);
+            $maxRows = $offset + 10;
+            $stmt->bind_param('ii', $offset, $maxRows);
+            if ($stmt->execute()) {
+                $result = $stmt->get_result();
+                $response['error'] = false;
+                $response['message'] = 'Success';
+                $response['courses'] = array();
+                while ($course = $result->fetch_assoc()) {
+                    $response['courses'][] = $course;
+                }
+            }
+        } else {
+            $response['courses'] = $this->getCoursesByName($offset, $q);
+            if (is_array($response['courses'])) {
+                $response['error'] = false;
+                $response['message'] = 'Success';
+            } else {
+                $response['message'] = $response['message'] . $response['courses'];
+            }
         }
-        $query = 'SELECT ' .
+
+        return $response;
+    }
+
+    public function getCoursesByName($offset = '0', $q) {
+        $response = array();
+        $orderBy = self::COLUMN_NAME;
+        $sort = 'ASC';
+        $name = "%$q%";
+        $stmt = $this->conn->prepare(
+                'SELECT ' .
                 self::COLUMN_COURSE_ID . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
                 self::COLUMN_IMAGE . ',' .
                 self::COLUMN_OFFERED_BY .
                 ' FROM ' . self::TABLE_COURSE .
-                " ORDER BY $orderBy $sort LIMIT ?,?";
-        $stmt = $this->conn->prepare($query);
-        $maxRows = $offset + 10;
-        $stmt->bind_param('ii', $offset, $maxRows);
+                ' WHERE ' . self::COLUMN_NAME . " LIKE ? ORDER BY $orderBy $sort LIMIT ?, ?");
+        $maxRow = $offset + 10;
+        $stmt->bind_param('sii', $name, $offset, $maxRow);
         if ($stmt->execute()) {
             $result = $stmt->get_result();
-            $response['error'] = false;
-            $response['message'] = 'Success';
-            $response['courses'] = array();
             while ($course = $result->fetch_assoc()) {
-                $response['courses'][] = $course;
+                $response[] = $course;
             }
         } else {
-            $response['message'] = $response['message'] . $stmt->error;
+            $response = $stmt->error;
+            return $response;
         }
         $stmt->close();
         return $response;

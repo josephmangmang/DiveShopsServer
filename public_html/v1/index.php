@@ -106,6 +106,7 @@ $app->get('/courses', function() use($app) {
     $offset = $app->request->params($requiredParams[0]);
     $sort = $app->request->params($requiredParams[1]);
     $order = $app->request->params($requiredParams[2]);
+    $q = $app->request->params('q');
     if (isEmpty($offset)) {
         $offset = "0";
     }
@@ -116,7 +117,7 @@ $app->get('/courses', function() use($app) {
         $order = 'name';
     }
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getCourses($offset, $order, $sort);
+    $response = $databaseHelper->getCourses($offset, $order, $sort, $q);
     echoResponse(200, $response);
 });
 
