@@ -990,7 +990,7 @@ class DatabaseHelper {
                 self::COLUMN_DIVE_SHOP_ID . '=?');
         $stmt->bind_param('diii', $price, $courseId, $shopCourseId, $shopId[0]);
         if ($stmt->execute()) {
-            $response['error'] = true;
+            $response['error'] = false;
             if ($stmt->affected_rows < 1) {
                 $response['message'] = 'Nothing changed Dive Shop course';
             } else {
