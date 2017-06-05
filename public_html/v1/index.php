@@ -414,7 +414,7 @@ $app->post('/diveshops/:shopUid/guides', function($shopUid) use($app) {
     $name = $app->request->params('name');
     $description = $app->request->params('description');
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->addGuide($shopUid, $name);
+    $response = $databaseHelper->addGuide($shopUid, $name, $description);
     echoResponse(200, $response);
 });
 

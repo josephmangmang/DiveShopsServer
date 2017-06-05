@@ -1551,7 +1551,7 @@ class DatabaseHelper {
         $stmt = $this->conn->prepare('INSERT INTO ' .
                 self::TABLE_GUIDE . '(' . self::COLUMN_NAME . ','
                 . self::COLUMN_DIVE_SHOP_ID . ',' . self::COLUMN_DESCRIPTION . ') VALUES(?,?,?)');
-        $stmt->bind_param('si', $name, $shopId[0], $description);
+        $stmt->bind_param('sis', $name, $shopId[0], $description);
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = 'Success';
@@ -1581,19 +1581,24 @@ class DatabaseHelper {
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
             $response['message'] = $response['message'] . 'Invalid dive shop id';
+            return $response;
         }
         $stmt = $this->conn->prepare(
                 'UPDATE ' . self::TABLE_GUIDE .
                 ' SET ' . self::COLUMN_NAME . '=?,' . self::COLUMN_DESCRIPTION . '=? WHERE '
                 . self::COLUMN_DIVE_SHOP_ID . '=? AND ' . self::COLUMN_GUIDE_ID . '=?');
-        $stmt->bind_param('sii', $name, $description, $shopId[0], $guideId);
+        $stmt->bind_param('ssii', $name, $description, $shopId[0], $guideId);
+
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = 'Success';
             $stmt->close();
             $stmt = $this->conn->prepare('SELECT ' .
-                    self::COLUMN_IMAGE . ' FROM ' . self::TABLE_GUIDE . ' WHERE ' . self::COLUMN_GUIDE_ID . "= $guideId"
-            );
+                    self::COLUMN_IMAGE . ' FROM ' . self::TABLE_GUIDE . ' WHERE ' . self::COLUMN_GUIDE_ID . "= ?");
+            if ($stmt == false) {
+                return $response;
+            }
+            $stmt->bind_param('i', $guideId);
             if ($stmt->execute()) {
                 $stmt->bind_result($image);
                 $stmt->fetch();
