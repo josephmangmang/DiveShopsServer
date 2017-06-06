@@ -237,7 +237,14 @@ $app->get('/diveshops', function() use($app) {
  */
 $app->get('/diveshops/:shopUid', function($shopUid) {
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveShop($shopUid);
+    $response = $databaseHelper->getDiveShopByUid($shopUid);
+    echoResponse(200, $response);
+});
+
+$app->put('/diveshops/:shopUid', function($shopUid) use ($app) {
+    $diveShopJson = $app->request->getBody();
+    $databaseHelper = new DatabaseHelper();
+    $response = $databaseHelper->updateDiveShop($shopUid, $diveShopJson);
     echoResponse(200, $response);
 });
 

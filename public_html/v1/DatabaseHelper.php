@@ -789,13 +789,23 @@ class DatabaseHelper {
      * @param type $shopUid
      * @return array
      */
-    public function getDiveShop($shopUid) {
+    public function getDiveShopByUid($shopUid) {
         $response = array('error' => true, 'message' => 'An error occured while getting Dive Shop. ');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
             $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
             return $response;
         }
+        $response['dive_shop'] = $this->getDiveShop($shopId);
+        if (is_array($response['dive_shop'])) {
+            $response['error'] = false;
+            $response['message'] = 'Success';
+        }
+        return $response;
+    }
+
+    private function getDiveShop($shopId) {
+        $response = array();
         $query = 'SELECT ' .
                 self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_NAME . ',' .
@@ -810,16 +820,14 @@ class DatabaseHelper {
                 ' FROM ' . self::TABLE_DIVE_SHOP .
                 ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=?';
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param('i', $shopId[0]);
+        $stmt->bind_param('i', $shopId);
         if ($stmt->execute()) {
             $result = $stmt->get_result();
-            $response['dive_shop'] = $result->fetch_assoc();
-            $response['dive_shop'][self::COLUMN_DIVE_SHOP_ID] = $shopUid;
-            $response['dive_shop']['courses'] = $this->getDiveShopCoursesList($shopId[0]);
-            $response['dive_shop']['boats'] = $this->getDiveShopBoats($shopId[0]);
-            $response['dive_shop']['guides'] = $this->getDiveShopGuides($shopId[0]);
-            $response['error'] = false;
-            $response['message'] = 'Success';
+            $response = $result->fetch_assoc();
+            $response[self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($shopId);
+            $response['courses'] = $this->getDiveShopCoursesList($shopId);
+            $response['boats'] = $this->getDiveShopBoats($shopId);
+            $response['guides'] = $this->getDiveShopGuides($shopId);
         }
         $stmt->close();
         return $response;
@@ -996,6 +1004,7 @@ class DatabaseHelper {
             } else {
                 $response['message'] = 'Successfully updated';
             }
+            $response['course'] = $this->getDiveShopCourse($shopCourseId);
         } else if (strpos($stmt->error, 'Duplicate') !== false) {
             $response['message'] = $response['message'] . 'Course already exist';
         }
@@ -1821,6 +1830,60 @@ class DatabaseHelper {
             return $response;
         }
         $stmt->close();
+        return $response;
+    }
+
+    public function getDiveShopCourse($shopCourseId) {
+        $query = 'SELECT ' .
+                self::COLUMN_DIVE_SHOP_COURSE_ID . ',' .
+                self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_COURSE_ID . ',' .
+                self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_PRICE . ',' .
+                self::COLUMN_NAME . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_IMAGE . ',' .
+                self::COLUMN_OFFERED_BY .
+                ' FROM ' . self::TABLE_DIVE_SHOP_COURSE .
+                ' INNER JOIN ' . self::TABLE_COURSE . ' ON ' .
+                self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_COURSE_ID . '=' . self::TABLE_COURSE . '.' . self::COLUMN_COURSE_ID .
+                ' WHERE ' . self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_DIVE_SHOP_COURSE_ID . '=?';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('i', $shopCourseId);
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $course = $result->fetch_assoc();
+            $course[self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($course[self::COLUMN_DIVE_SHOP_ID]);
+        }
+        return $course;
+    }
+
+    public function updateDiveShop($shopUid, $diveShopJson) {
+        $response = array('error' => true, 'message' => 'An error occurred while updating dive shop. ');
+        $shopId = $this->hashids->decode($shopUid);
+        if (count($shopId) < 1) {
+            $response['message'] = $response['message'] . 'Invalid dive shop id';
+            return $response;
+        }
+        $diveShop = json_decode($diveShopJson);
+        $query = 'UPDATE ' . self::TABLE_DIVE_SHOP . ' SET ' .
+                self::COLUMN_NAME . '=?,' .
+                self::COLUMN_CONTACT_NUMBER . '=?,' .
+                self::COLUMN_PRICE_PER_DIVE . '=?,' .
+                self::COLUMN_DESCRIPTION . '=?,' .
+                self::COLUMN_SPECIAL_SERVICE . '=?,' .
+                self::COLUMN_ADDRESS . '=?,' .
+                self::COLUMN_LATITUDE . '=?,' .
+                self::COLUMN_LONGTITUDE . '=?' .
+                ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=?';
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param(
+                'ssdsssddi', $diveShop->name, $diveShop->contact_number, $diveShop->price_per_dive, $diveShop->description, $diveShop->special_service, $diveShop->address, $diveShop->latitude, $diveShop->longitude, $shopId[0]
+        );
+        if ($stmt->execute()) {
+            $response['error'] = false;
+            $response['message'] = 'Successfully updated';
+            $response['dive_shop'] = $this->getDiveShop($shopId[0]);
+        }
         return $response;
     }
 
