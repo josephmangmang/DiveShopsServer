@@ -622,6 +622,7 @@ class DatabaseHelper {
         $query = 'SELECT ' .
                 self::COLUMN_DIVE_SITE_ID . ',' .
                 self::COLUMN_NAME . ',' .
+                self::COLUMN_IMAGE . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
                 self::COLUMN_ADDRESS . ',' .
                 self::COLUMN_LATITUDE . ',' .
@@ -1380,7 +1381,11 @@ class DatabaseHelper {
         $stmt = $this->conn->prepare('SELECT ' .
                 self::COLUMN_DIVE_SITE_ID . ',' .
                 self::COLUMN_NAME . ',' .
-                self::COLUMN_ADDRESS .
+                self::COLUMN_IMAGE . ',' .
+                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_ADDRESS . ',' .
+                self::COLUMN_LATITUDE . ',' .
+                self::COLUMN_LONGTITUDE .
                 ' FROM ' . self::TABLE_DIVE_SITE .
                 ' WHERE ' . self::COLUMN_NAME . " LIKE ? LIMIT ?,?");
         $maxRows = $offset + 10;
@@ -1455,6 +1460,7 @@ class DatabaseHelper {
                 'd.' . self::COLUMN_DAILY_TRIP_ID . ',' .
                 'd.' . self::COLUMN_DIVE_SITE_ID . ', ' .
                 's.' . self::COLUMN_NAME . ',' .
+                's.' . self::COLUMN_IMAGE . ',' .
                 's.' . self::COLUMN_DESCRIPTION . ',' .
                 's.' . self::COLUMN_ADDRESS . ',' .
                 's.' . self::COLUMN_LATITUDE . ',' .

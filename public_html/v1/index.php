@@ -169,7 +169,6 @@ $app->get('/sites', function() use($app) {
     }
     $databaseHelper = new DatabaseHelper();
     if (isEmpty($lat) && isEmpty($lng)) {
-        verifyRequiredParams(array('q'));
         $searchName = $app->request->params('q');
         $response = $databaseHelper->getDiveSitesByName($searchName, $offset);
     } else {
