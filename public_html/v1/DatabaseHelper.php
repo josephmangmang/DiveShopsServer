@@ -692,6 +692,9 @@ class DatabaseHelper {
      * @return array
      */
     public function getDiveSites($lat, $lng, $radius = 25, $offset = '0') {
+        if ($lat == 0 && $lng == 0) {
+            return $this->getDiveSitesByName("", $offset);
+        }
         $response = array('error' => true, 'message' => 'An error occured while getting list of Dive Site. ');
         if (!ctype_digit($offset)) {
             $response['message'] = $response['message'] . ' Invalid offset "' . $offset . '"';
