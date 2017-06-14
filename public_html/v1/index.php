@@ -83,16 +83,20 @@ $app->get('/users/:accountType/:uid', function( $accountType, $uid) use ($app) {
  *
  */
 $app->get('/trips', function() use($app) {
-    $requiredParams = array('start_date', 'end_date', 'offset', 'sort', 'order');
-    verifyRequiredParams($requiredParams);
-    $startDate = $app->request->params($requiredParams[0]);
-    $endDate = $app->request->params($requiredParams[1]);
-    $offset = $app->request->params($requiredParams[2]);
-    $sort = $app->request->params($requiredParams[3]);
-    $order = $app->request->params($requiredParams[4]);
-
+    verifyRequiredParams(array('start_date', 'end_date'));
+    $startDate = $app->request->params('start_date');
+    $endData = $app->request->params('end_date');
+    $offset = $app->request->params('offset');
+    $sort = $app->request->params('sort');
+    $order = $app->request->params('order');
+    $diveSiteId = $app->request->params('dive_site_id');
+    $lat = $app->request->params('lat');
+    $lng = $app->request->params('lng');
+    if (isEmpty($offset)) {
+        $offset = 0;
+    }
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveTrips($startDate, $endDate, $offset, $sort, $order);
+    $response = $databaseHelper->getDiveTrips($startDate, $endData, $diveSiteId, $lat, $lng, $offset, $sort, $order);
     echoResponse(200, $response);
 });
 

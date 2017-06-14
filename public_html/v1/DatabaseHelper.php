@@ -351,29 +351,107 @@ class DatabaseHelper {
      * @param type $sort PRICE or RATING
      * @param type $order
      */
-    public function getDiveTrips($startDate, $endDate, $offset = 0, $sort = 'price', $order = 'ASC') {
-        $response = array();
-        $query = 'SELECT ' .
-                self::COLUMN_DAILY_TRIP_ID . ',' .
-                self::COLUMN_DIVE_SHOP_ID . ', ' .
-                self::COLUMN_GROUP_SIZE . ', ' .
-                self::COLUMN_NUMBER_OF_DIVE . ', ' .
-                self::COLUMN_DATE . ', ' .
-                self::COLUMN_PRICE .
-                ' FROM ' . self::TABLE_DAILY_TRIP .
-                ' ORDER BY ? ? LIMIT ?, ?';
-        $stmt = $this->conn->prepare($query);
-        $stmt->bind_param('ssii', $sort, $this->getSortType($order), $offset, $offset + 10);
-        if ($stmt->execute()) {
-            for ($i = 0; $i < $stmt->num_rows; $i++) {
-                $stmt->bind_result($tripId, $shopId, $groupSize, $numberOfDive, $date, $price);
-                $stmt->fetch();
-                $response[$i] = array('trip_id' => $tripId, 'shop_id' => $shopId, 'group_size' => $groupSize, 'number_of_dive' => $numberOfDive, 'date' => $date, 'price' => $price);
-                $response[$i]['guides'] = $this->getGuidesByTripId($tripId);
-                $response[$i]['sites'] = $this->getDiveSitesByTripId($tripId);
-                $response[$i]['guest'] = $this->getGuestsByTripId($tripId);
-            }
+    public function getDiveTrips($startDate, $endData, $diveSiteId, $lat, $lng, $offset, $sort, $order) {
+        $sort = $this->getSortType($sort);
+        $allowedOrderBy = array(self::COLUMN_GROUP_SIZE, self::COLUMN_DATE, self::COLUMN_PRICE);
+        if (!in_array($order, $allowedOrderBy)) {
+            $order = self::COLUMN_DATE;
         }
+        if ($this->isEmpty($diveSiteId)) {
+            $diveSiteId = 0;
+        }
+        if ($this->isEmpty($lat)) {
+            $lat = 0;
+        }
+        if ($this->isEmpty($lng)) {
+            $lng = 0;
+        }
+        $maxRows = $offset + 10;
+        $radius = 25;
+        $columns = 't.' . self::COLUMN_DAILY_TRIP_ID . ',' .
+                't.' . self::COLUMN_DIVE_SHOP_ID . ',' .
+                't.' . self::COLUMN_GROUP_SIZE . ',' .
+                't.' . self::COLUMN_NUMBER_OF_DIVE . ',' .
+                't.' . self::COLUMN_DATE . ',' .
+                't.' . self::COLUMN_CREATE_TIME . ',' .
+                't.' . self::COLUMN_PRICE . ',' .
+                't.' . self::COLUMN_PRICE_NOTE . ',' .
+                'd.' . self::COLUMN_NAME . ',' .
+                'd.' . self::COLUMN_ADDRESS . ',' .
+                'd.' . self::COLUMN_LATITUDE . ',' .
+                'd.' . self::COLUMN_LONGTITUDE;
+        if ($lat != 0 || $lng != 0) {
+            $diveSiteJoin = '';
+            $diveSiteWhere = '';
+            if ($diveSiteId >= 0) {
+                $diveSiteJoin = ' INNER JOIN ' . self::TABLE_DAILY_TRIP_DIVE_SITE . ' s' .
+                        ' ON t.' . self::COLUMN_DAILY_TRIP_ID . '= s.' . self::COLUMN_DAILY_TRIP_ID;
+                $diveSiteWhere = 's.' . self::COLUMN_DIVE_SITE_ID . '=? AND ';
+            }
+            $query = 'SELECT ' .
+                    $columns .
+                    ', ( 3959 * acos( cos( radians(?) ) * cos( radians( ' .
+                    'd.' . self::COLUMN_LATITUDE . ' ) ) * cos( radians( ' .
+                    'd.' . self::COLUMN_LONGTITUDE . ' ) - radians(?) ) + sin( radians(?) ) * sin( radians( ' .
+                    'd.' . self::COLUMN_LATITUDE . ' ) ) ) ) AS distance' .
+                    ' FROM ' . self::TABLE_DAILY_TRIP . ' t' .
+                    ' INNER JOIN ' . self::TABLE_DIVE_SHOP . ' d' .
+                    ' ON t.' . self::COLUMN_DIVE_SHOP_ID . '= d.' . self::COLUMN_DIVE_SHOP_ID .
+                    " $diveSiteJoin" .
+                    " WHERE $diveSiteWhere " .
+                    't.' . self::COLUMN_DATE . ' >= ? AND ' .
+                    't.' . self::COLUMN_DATE . ' <= ? ' .
+                    " HAVING distance < ? ORDER BY distance, $order $sort LIMIT ?,?";
+
+            $stmt = $this->conn->prepare($query);
+            if ($stmt == false) {
+                echo $this->conn->error;
+            } else {
+                if ($diveSiteId >= 0) {
+                    $stmt->bind_param('dddissiii', $lat, $lng, $lat, $diveSiteId, $startDate, $endData, $radius, $offset, $maxRows);
+                } else {
+                    $stmt->bind_param('dddssiii', $lat, $lng, $lat, $startDate, $endData, $radius, $offset, $maxRows);
+                }
+            }
+        } else if ($diveSiteId >= 0) {
+            $query = 'SELECT ' .
+                    $columns .
+                    ' FROM ' . self::TABLE_DAILY_TRIP . ' t' .
+                    ' INNER JOIN ' . self::TABLE_DAILY_TRIP_DIVE_SITE . ' s' .
+                    ' ON t.' . self::COLUMN_DAILY_TRIP_ID . '= s.' . self::COLUMN_DAILY_TRIP_ID .
+                    ' INNER JOIN ' . self::TABLE_DIVE_SHOP . ' d' .
+                    ' ON t.' . self::COLUMN_DIVE_SHOP_ID . '= d.' . self::COLUMN_DIVE_SHOP_ID .
+                    ' WHERE s.' . self::COLUMN_DIVE_SITE_ID . '=? ' .
+                    ' AND t.' . self::COLUMN_DATE . ' >= ?' .
+                    ' AND t.' . self::COLUMN_DATE . " <= ? ORDER BY $order  $sort  LIMIT ?,?";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param('issii', $diveSiteId, $startDate, $endData, $offset, $maxRows);
+        } else {
+            $query = 'SELECT ' .
+                    $columns .
+                    ' FROM ' . self::TABLE_DAILY_TRIP . ' t' .
+                    ' INNER JOIN ' . self::TABLE_DIVE_SHOP . ' d' .
+                    ' ON t.' . self::COLUMN_DIVE_SHOP_ID . '= d.' . self::COLUMN_DIVE_SHOP_ID .
+                    ' WHERE t.' . self::COLUMN_DATE . ' >= ? AND t.' . self::COLUMN_DATE . " <= ? ORDER BY $order  $sort  LIMIT ?,?";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bind_param('ssii', $startDate, $endData, $offset, $maxRows);
+        }
+        if ($stmt->execute()) {
+            $result = $stmt->get_result();
+            $response['daily_trips'] = array();
+            while ($trip = $result->fetch_assoc()) {
+                $trip[self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($trip[self::COLUMN_DIVE_SHOP_ID]);
+                $trip['daily_trip_boats'] = $this->getDailyTripBoats($trip[self::COLUMN_DAILY_TRIP_ID]);
+                $trip['daily_trip_guides'] = $this->getDailyTripGuides($trip[self::COLUMN_DAILY_TRIP_ID]);
+                $trip['daily_trip_dive_sites'] = $this->getDailyTripDiveSites($trip[self::COLUMN_DAILY_TRIP_ID]);
+                $trip['daily_trip_guests'] = $this->getDailyTripGuests($trip[self::COLUMN_DAILY_TRIP_ID]);
+                $response['daily_trips'][] = $trip;
+            }
+            $response['error'] = false;
+            $response['message'] = 'Success';
+        }
+        $stmt->close();
         return $response;
     }
 
