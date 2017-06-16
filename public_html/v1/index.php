@@ -76,7 +76,7 @@ $app->get('/users/:accountType/:uid', function( $accountType, $uid) use ($app) {
     echoResponse(200, $response);
 });
 
-/** NOT YET
+/** DONE
  * Get a list of daily trips and filter by dive site
  * Required parameters: 
  * start_Date, end_Date, offset, sort {sort=price or rating, order=ASC or DESC}
