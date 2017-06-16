@@ -1399,35 +1399,33 @@ class DatabaseHelper {
             return $response;
         }
         $maxRows = $offset + 10;
+        $columns = 'd.' . self::COLUMN_NAME . ',' .
+                't.' . self::COLUMN_DAILY_TRIP_ID . ',' .
+                't.' . self::COLUMN_DIVE_SHOP_ID . ',' .
+                't.' . self::COLUMN_GROUP_SIZE . ',' .
+                't.' . self::COLUMN_NUMBER_OF_DIVE . ',' .
+                't.' . self::COLUMN_DATE . ',' .
+                't.' . self::COLUMN_PRICE . ',' .
+                't.' . self::COLUMN_PRICE_NOTE;
         if ($this->isEmpty($diveSiteId) || $diveSiteId == -1) {
-            $query = 'SELECT ' .
-                    self::COLUMN_DAILY_TRIP_ID . ',' .
-                    self::COLUMN_DIVE_SHOP_ID . ',' .
-                    self::COLUMN_GROUP_SIZE . ',' .
-                    self::COLUMN_NUMBER_OF_DIVE . ',' .
-                    self::COLUMN_DATE . ',' .
-                    self::COLUMN_CREATE_TIME . ',' .
-                    self::COLUMN_PRICE . ',' .
-                    self::COLUMN_PRICE_NOTE .
-                    ' FROM ' . self::TABLE_DAILY_TRIP .
-                    ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' .
-                    self::COLUMN_DATE . " >= ? AND " . self::COLUMN_DATE . " <= ? ORDER BY $order  $sort  LIMIT ?,?";
+            $query = 'SELECT ' . $columns .
+                    ' FROM ' . self::TABLE_DAILY_TRIP . ' t' .
+                    ' INNER JOIN ' . self::TABLE_DIVE_SHOP . ' d' .
+                    ' ON d.' . self::COLUMN_DIVE_SHOP_ID . '= t.' . self::COLUMN_DIVE_SHOP_ID .
+                    ' WHERE t.' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' .
+                    self::COLUMN_DATE . " >= ? AND " .
+                    self::COLUMN_DATE . " <= ? ORDER BY $order  $sort  LIMIT ?,?";
             $stmt = $this->conn->prepare($query);
             $stmt->bind_param('issii', $shopId[0], $startDate, $endData, $offset, $maxRows);
         } else {
-            $query = 'SELECT ' .
-                    'd.' . self::COLUMN_DAILY_TRIP_ID . ',' .
-                    'd.' . self::COLUMN_DIVE_SHOP_ID . ',' .
-                    'd.' . self::COLUMN_GROUP_SIZE . ',' .
-                    'd.' . self::COLUMN_NUMBER_OF_DIVE . ',' .
-                    'd.' . self::COLUMN_DATE . ',' .
-                    'd.' . self::COLUMN_PRICE . ',' .
-                    'd.' . self::COLUMN_PRICE_NOTE .
-                    ' FROM ' . self::TABLE_DAILY_TRIP . ' d' .
+            $query = 'SELECT ' . $columns .
+                    ' FROM ' . self::TABLE_DAILY_TRIP . ' t' .
                     ' INNER JOIN ' . self::TABLE_DAILY_TRIP_DIVE_SITE . ' s' .
-                    ' ON d.' . self::COLUMN_DAILY_TRIP_ID . '= s.' . self::COLUMN_DAILY_TRIP_ID .
-                    ' WHERE d.' . self::COLUMN_DIVE_SHOP_ID . '=? AND s.' .
-                    self::COLUMN_DIVE_SITE_ID . '=? AND ' .
+                    ' ON s.' . self::COLUMN_DAILY_TRIP_ID . '= t.' . self::COLUMN_DAILY_TRIP_ID .
+                    ' INNER JOIN ' . self::TABLE_DIVE_SHOP . ' d' .
+                    ' ON d.' . self::COLUMN_DIVE_SHOP_ID . '= t.' . self::COLUMN_DIVE_SHOP_ID .
+                    ' WHERE t.' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' .
+                    's.' . self::COLUMN_DIVE_SITE_ID . '=? AND ' .
                     self::COLUMN_DATE . ' >= ? AND ' .
                     self::COLUMN_DATE . " <= ? ORDER BY $order  $sort  LIMIT ?,?";
 
