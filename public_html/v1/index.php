@@ -154,7 +154,7 @@ $app->put('/courses/:courseId', function($courseId) use($app) {
     $offeredBy = $app->request->put($requiredParams[2]);
 
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateCourse($courseId, $name, $description, $offeredBy);
+    $response = $databaseHelper->updateCourse($courseId, $name, $whatYouWillLearn, $whoShouldTake, $gearYouWillUse, $offeredBy);
     echoResponse(200, $response);
 });
 
