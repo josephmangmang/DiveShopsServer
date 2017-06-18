@@ -309,8 +309,9 @@ $app->post('/diveshops/:shopUid/boats', function ($shopUid) use ($app) {
     verifyRequiredParams(array('name', 'description'));
     $name = $app->request->params('name');
     $description = $app->request->params('description');
+    $additionalInfo = $app->request->params('additional_information');
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->addBoat($shopUid, $name, $description);
+    $response = $databaseHelper->addBoat($shopUid, $name, $description, $additionalInfo);
     echoResponse(200, $response);
 });
 
@@ -336,8 +337,9 @@ $app->put('/diveshops/:shopUid/boats/:boatId', function($shopUid, $boatId) use (
     verifyRequiredParams(array('name', 'description'));
     $name = $app->request->put('name');
     $description = $app->request->put('description');
+    $additionalInfo = $app->request->put('additional_information');
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->updateBoat($shopUid, $boatId, $name, $description);
+    $response = $databaseHelper->updateBoat($shopUid, $boatId, $name, $description, $additionalInfo);
     echoResponse(200, $response);
 });
 

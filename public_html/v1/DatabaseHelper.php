@@ -73,6 +73,7 @@ class DatabaseHelper {
     const COLUMN_WHAT_YOU_WILL_LEARN = 'what_you_will_learn';
     const COLUMN_WHO_SHOULD_TAKE_THIS_COURSE = 'who_should_take_this_course';
     const COLUMN_SCUBA_GEAR_YOU_WILL_USE = 'scuba_gear_you_will_use';
+    const COLUMN_ADDITIONAL_INFORMATION = 'additional_information';
 
     private $hashids;
 
@@ -942,6 +943,7 @@ class DatabaseHelper {
                 self::COLUMN_BOAT_ID . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_ADDITIONAL_INFORMATION . ',' .
                 self::COLUMN_IMAGE .
                 ' FROM ' . self::TABLE_BOAT .
                 ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=?' .
@@ -973,6 +975,7 @@ class DatabaseHelper {
                 self::COLUMN_BOAT_ID . ',' .
                 self::COLUMN_NAME . ',' .
                 self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_ADDITIONAL_INFORMATION . ',' .
                 self::COLUMN_IMAGE .
                 ' FROM ' . self::TABLE_BOAT .
                 ' WHERE ' . self::COLUMN_DIVE_SHOP_ID . '=? AND ' . self::COLUMN_NAME . " LIKE ? " .
@@ -1163,7 +1166,7 @@ class DatabaseHelper {
      * @param type $name
      * @return array
      */
-    public function addBoat($shopUid, $name, $description) {
+    public function addBoat($shopUid, $name, $description, $additionalInfo) {
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
             $response['error'] = true;
@@ -1171,8 +1174,11 @@ class DatabaseHelper {
             return $response;
         }
         $response = array();
-        $stmt = $this->conn->prepare('INSERT INTO ' . self::TABLE_BOAT . '(' . self::COLUMN_DIVE_SHOP_ID . ',' . self::COLUMN_NAME . ',' . self::COLUMN_DESCRIPTION . ') VALUES (?,?,?)');
-        $stmt->bind_param('iss', $shopId[0], $name, $description);
+        $stmt = $this->conn->prepare('INSERT INTO ' .
+                self::TABLE_BOAT . '(' . self::COLUMN_DIVE_SHOP_ID . ',' .
+                self::COLUMN_NAME . ',' . self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_ADDITIONAL_INFORMATION . ') VALUES (?,?,?,?)');
+        $stmt->bind_param('iss', $shopId[0], $name, $description, $additionalInfo);
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = $name . ' successfully added';
@@ -1180,6 +1186,8 @@ class DatabaseHelper {
                 self::COLUMN_BOAT_ID => $stmt->insert_id,
                 self::COLUMN_DIVE_SHOP_ID => $shopUid,
                 self::COLUMN_NAME => $name,
+                self::COLUMN_DESCRIPTION => $description,
+                self::COLUMN_ADDITIONAL_INFORMATION => $additionalInfo,
                 self::COLUMN_IMAGE => ""
             );
         } else {
@@ -1230,7 +1238,7 @@ class DatabaseHelper {
      * @param type $name
      * @return array
      */
-    public function updateBoat($shopUid, $boatId, $name, $description) {
+    public function updateBoat($shopUid, $boatId, $name, $description, $additionalInfo) {
         $response = array('error' => true, 'message' => 'An error occured while updating boat. ');
         $shopId = $this->hashids->decode($shopUid);
         if (count($shopId) < 1) {
@@ -1240,11 +1248,13 @@ class DatabaseHelper {
         $stmt = $this->conn->prepare('UPDATE ' .
                 self::TABLE_BOAT . ' SET ' .
                 self::COLUMN_NAME . '=?, ' .
-                self::COLUMN_DESCRIPTION . '=?  WHERE ' .
+                self::COLUMN_DESCRIPTION . '=?,' .
+                self::COLUMN_ADDITIONAL_INFORMATION . '=?' .
+                '  WHERE ' .
                 self::COLUMN_DIVE_SHOP_ID . '=?' .
                 ' AND ' .
                 self::COLUMN_BOAT_ID . '=?');
-        $stmt->bind_param('ssii', $name, $description, $shopId[0], $boatId);
+        $stmt->bind_param('sssii', $name, $description, $additionalInfo, $shopId[0], $boatId);
         if ($stmt->execute()) {
             $stmt->close();
             $response['error'] = false;
@@ -1253,6 +1263,7 @@ class DatabaseHelper {
                     self::COLUMN_BOAT_ID . ',' .
                     self::COLUMN_NAME . ',' .
                     self::COLUMN_DESCRIPTION . ',' .
+                    self::COLUMN_ADDITIONAL_INFORMATION . ',' .
                     self::COLUMN_IMAGE . ' FROM ' . self::TABLE_BOAT .
                     ' WHERE ' . self::COLUMN_BOAT_ID . '=?');
             $stmt->bind_param('i', $boatId);
@@ -1506,6 +1517,7 @@ class DatabaseHelper {
                 'b.' . self::COLUMN_DIVE_SHOP_ID . ',' .
                 'b.' . self::COLUMN_NAME . ',' .
                 'b.' . self::COLUMN_DESCRIPTION . ',' .
+                'b.' . self::COLUMN_ADDITIONAL_INFORMATION . ',' .
                 'b.' . self::COLUMN_IMAGE .
                 ' FROM ' . self::TABLE_DAILY_TRIP_BOAT . ' d' .
                 ' INNER JOIN ' . self::TABLE_BOAT . ' b' .
