@@ -70,6 +70,9 @@ class DatabaseHelper {
     const COLUMN_DAILY_TRIP_DIVE_SITE_ID = 'daily_trip_dive_site_id';
     const COLUMN_DAILY_TRIP_GUEST_ID = 'daily_trip_guest_id';
     const COLUMN_GUIDE_ID = 'guide_id';
+    const COLUMN_WHAT_YOU_WILL_LEARN = 'what_you_will_learn';
+    const COLUMN_WHO_SHOULD_TAKE_THIS_COURSE = 'who_should_take_this_course';
+    const COLUMN_SCUBA_GEAR_YOU_WILL_USE = 'scuba_gear_you_will_use';
 
     private $hashids;
 
@@ -565,9 +568,11 @@ class DatabaseHelper {
             $query = 'SELECT ' .
                     self::COLUMN_COURSE_ID . ',' .
                     self::COLUMN_NAME . ',' .
-                    self::COLUMN_DESCRIPTION . ',' .
                     self::COLUMN_IMAGE . ',' .
-                    self::COLUMN_OFFERED_BY .
+                    self::COLUMN_OFFERED_BY . ',' .
+                    self::COLUMN_WHAT_YOU_WILL_LEARN . ',' .
+                    self::COLUMN_WHO_SHOULD_TAKE_THIS_COURSE . ',' .
+                    self::COLUMN_SCUBA_GEAR_YOU_WILL_USE .
                     ' FROM ' . self::TABLE_COURSE .
                     " ORDER BY $orderBy $sort LIMIT ?,?";
             $stmt = $this->conn->prepare($query);
@@ -604,9 +609,11 @@ class DatabaseHelper {
                 'SELECT ' .
                 self::COLUMN_COURSE_ID . ',' .
                 self::COLUMN_NAME . ',' .
-                self::COLUMN_DESCRIPTION . ',' .
                 self::COLUMN_IMAGE . ',' .
-                self::COLUMN_OFFERED_BY .
+                self::COLUMN_OFFERED_BY . ',' .
+                self::COLUMN_WHAT_YOU_WILL_LEARN . ',' .
+                self::COLUMN_WHO_SHOULD_TAKE_THIS_COURSE . ',' .
+                self::COLUMN_SCUBA_GEAR_YOU_WILL_USE .
                 ' FROM ' . self::TABLE_COURSE .
                 ' WHERE ' . self::COLUMN_NAME . " LIKE ? ORDER BY $orderBy $sort LIMIT ?, ?");
         $maxRow = $offset + 10;
@@ -631,13 +638,16 @@ class DatabaseHelper {
      * @param type $offeredBy
      * @return array
      */
-    public function addCourse($name, $description = '', $offeredBy = '') {
+    public function addCourse($name, $whatYouWillLearn = '', $whoShouldTake = '', $gearYouWillUse = '', $offeredBy = '') {
         $response = array('error' => true, 'message' => 'An error occured while adding Course. ');
         $stmt = $this->conn->prepare('INSERT INTO ' .
                 self::TABLE_COURSE . '(' .
-                self::COLUMN_NAME . ',' . self::COLUMN_DESCRIPTION . ',' . self::COLUMN_OFFERED_BY .
-                ') VALUES(?, ?, ?)');
-        $stmt->bind_param('sss', $name, $description, $offeredBy);
+                self::COLUMN_NAME . ',' . self::COLUMN_OFFERED_BY . ',' .
+                self::COLUMN_WHAT_YOU_WILL_LEARN . ',' .
+                self::COLUMN_WHO_SHOULD_TAKE_THIS_COURSE . ',' .
+                self::COLUMN_SCUBA_GEAR_YOU_WILL_USE .
+                ') VALUES(?, ?, ?,?,?)');
+        $stmt->bind_param('sssss', $name, $offeredBy, $whatYouWillLearn, $whoShouldTake, $gearYouWillUse);
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = "$name Successfully added";
@@ -659,15 +669,17 @@ class DatabaseHelper {
      * @param type $offeredBy
      * @return array
      */
-    public function updateCourse($courseId, $name, $description, $offeredBy) {
+    public function updateCourse($courseId, $name, $whatYouWillLearn, $whoShouldTake, $gearYouWillUse, $offeredBy) {
         $response = array('error' => true, 'message' => 'An error occured while updating course. ');
         $stmt = $this->conn->prepare('UPDATE ' .
                 self::TABLE_COURSE . ' SET ' .
                 self::COLUMN_NAME . '=?,' .
-                self::COLUMN_DESCRIPTION . '=?, ' .
+                self::COLUMN_WHAT_YOU_WILL_LEARN . '=?,' .
+                self::COLUMN_WHO_SHOULD_TAKE_THIS_COURSE . '=?, ' .
+                self::COLUMN_SCUBA_GEAR_YOU_WILL_USE . '=?,' .
                 self::COLUMN_OFFERED_BY . '=? WHERE ' .
                 self::COLUMN_COURSE_ID . '=?');
-        $stmt->bind_param('sssi', $name, $description, $offeredBy, $courseId);
+        $stmt->bind_param('sssssi', $name, $whatYouWillLearn, $whoShouldTake, $gearYouWillUse, $offeredBy, $courseId);
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = "$name successfully updated.";
@@ -998,7 +1010,9 @@ class DatabaseHelper {
                 self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_COURSE_ID . ',' .
                 self::COLUMN_PRICE . ',' .
                 self::COLUMN_NAME . ',' .
-                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_WHAT_YOU_WILL_LEARN . ',' .
+                self::COLUMN_WHO_SHOULD_TAKE_THIS_COURSE . ',' .
+                self::COLUMN_SCUBA_GEAR_YOU_WILL_USE . ',' .
                 self::COLUMN_IMAGE . ',' .
                 self::COLUMN_OFFERED_BY .
                 ' FROM ' . self::TABLE_DIVE_SHOP_COURSE .
@@ -1318,7 +1332,9 @@ class DatabaseHelper {
             $stmt = $this->conn->prepare('SELECT ' .
                     self::COLUMN_COURSE_ID . ',' .
                     self::COLUMN_NAME . ',' .
-                    self::COLUMN_DESCRIPTION . ',' .
+                    self::COLUMN_WHAT_YOU_WILL_LEARN . ',' .
+                    self::COLUMN_WHO_SHOULD_TAKE_THIS_COURSE . ',' .
+                    self::COLUMN_SCUBA_GEAR_YOU_WILL_USE . ',' .
                     self::COLUMN_IMAGE . ',' .
                     self::COLUMN_OFFERED_BY .
                     ' FROM ' . self::TABLE_COURSE . ' WHERE ' . self::COLUMN_COURSE_ID . '=?');
@@ -1925,7 +1941,9 @@ class DatabaseHelper {
                 self::TABLE_DIVE_SHOP_COURSE . '.' . self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_PRICE . ',' .
                 self::COLUMN_NAME . ',' .
-                self::COLUMN_DESCRIPTION . ',' .
+                self::COLUMN_WHAT_YOU_WILL_LEARN . ',' .
+                self::COLUMN_WHO_SHOULD_TAKE_THIS_COURSE . ',' .
+                self::COLUMN_SCUBA_GEAR_YOU_WILL_USE . ',' .
                 self::COLUMN_IMAGE . ',' .
                 self::COLUMN_OFFERED_BY .
                 ' FROM ' . self::TABLE_DIVE_SHOP_COURSE .

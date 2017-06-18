@@ -130,14 +130,16 @@ $app->get('/courses', function() use($app) {
  * Only DiveTym Admin can add new course
  */
 $app->post('/courses', function() use($app) {
-    $requiredParams = array('name', 'description', 'offered_by');
+    $requiredParams = array('name', 'what_you_will_learn', 'who_should_take_this_course', 'scuba_gear_you_will_use', 'offered_by');
     verifyRequiredParams(array('name', 'offered_by'));
     $name = $app->request->params($requiredParams[0]);
-    $description = $app->request->params($requiredParams[1]);
-    $offeredBy = $app->request->params($requiredParams[2]);
+    $whatYouWillLearn = $app->request->params($requiredParams[1]);
+    $whoShouldTake = $app->request->params($requiredParams[2]);
+    $gearYouWillUse = $app->request->params($requiredParams[3]);
+    $offeredBy = $app->request->params($requiredParams[4]);
 
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->addCourse($name, $description, $offeredBy);
+    $response = $databaseHelper->addCourse($name, $whatYouWillLearn, $whoShouldTake, $gearYouWillUse, $offeredBy);
     echoResponse(200, $response);
 });
 
