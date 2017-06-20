@@ -221,11 +221,14 @@ $app->put('/sites/:siteId', function($siteId) use($app) {
  * Get a list of Dive Shop
  */
 $app->get('/diveshops', function() use($app) {
-    verifyRequiredParams(array('lat', 'lng'));
     $lat = $app->request->params('lat');
     $lng = $app->request->params('lng');
     $radius = $app->request->params('radius');
     $offset = $app->request->params('offset');
+    $sort = $app->request->params('sort');
+    $order = $app->request->params('order');
+    $q = $app->request->params('q');
+
     if (!isset($offset) || strlen($offset) <= 0) {
         $offset = '0';
     }
@@ -233,7 +236,7 @@ $app->get('/diveshops', function() use($app) {
         $radius = 25;
     }
     $databaseHelper = new DatabaseHelper();
-    $response = $databaseHelper->getDiveShops($lat, $lng, $radius, $offset);
+    $response = $databaseHelper->getDiveShops($lat, $lng, $radius, $q, $offset, $sort, $order);
     echoResponse(200, $response);
 });
 

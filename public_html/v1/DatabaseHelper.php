@@ -37,6 +37,7 @@ class DatabaseHelper {
     const TABLE_DIVE_SITE = 'dive_site';
     const TABLE_COURSE = 'course';
     const TABLE_GUIDE = 'guide';
+    const TABLE_RATING = 'rating';
     // Column names
     const COLUMN_USER_ID = 'user_id';
     const COLUMN_ACCOUNT_TYPE = 'account_type';
@@ -74,6 +75,9 @@ class DatabaseHelper {
     const COLUMN_WHO_SHOULD_TAKE_THIS_COURSE = 'who_should_take_this_course';
     const COLUMN_SCUBA_GEAR_YOU_WILL_USE = 'scuba_gear_you_will_use';
     const COLUMN_ADDITIONAL_INFORMATION = 'additional_information';
+    const COLUMN_RATE = 'rate';
+    const COLUMN_RATING_ID = 'rating_id';
+    const COLUMN_MESSAGE = 'message';
 
     private $hashids;
 
@@ -836,31 +840,85 @@ class DatabaseHelper {
      * @param type $offset
      * @return array
      */
-    public function getDiveShops($lat, $lng, $radius, $offset) {
+    public function getDiveShops($lat, $lng, $radius, $q, $offset, $sort, $order) {
         $response = array('error' => true, 'message' => 'An error occured while getting list of Dive Site. ');
         if (!ctype_digit($offset)) {
             $response['message'] = $response['message'] . ' Invalid offset "' . $offset . '"';
             return $response;
         }
-        $query = 'SELECT ' .
-                self::COLUMN_DIVE_SHOP_ID . ',' .
+        $sort = $this->getSortType($sort);
+        $allowedOrderBy = array(self::COLUMN_NAME, self::COLUMN_RATE, self::COLUMN_PRICE_PER_DIVE);
+        if (!in_array($order, $allowedOrderBy)) {
+            $order = self::COLUMN_RATE;
+        }
+        if ($this->isEmpty($lat)) {
+            $lat = 0;
+        }
+        if ($this->isEmpty($lng)) {
+            $lng = 0;
+        }
+
+        $maxRows = $offset + 10;
+        $columns = 'd.' . self::COLUMN_DIVE_SHOP_ID . ',' .
                 self::COLUMN_NAME . ',' .
-                self::COLUMN_DESCRIPTION . ',' .
                 self::COLUMN_IMAGE . ',' .
-                self::COLUMN_CONTACT_NUMBER . ',' .
                 self::COLUMN_ADDRESS . ',' .
                 self::COLUMN_PRICE_PER_DIVE . ',' .
                 self::COLUMN_LATITUDE . ',' .
                 self::COLUMN_LONGTITUDE . ',' .
-                self::COLUMN_SPECIAL_SERVICE .
-                ', ( 3959 * acos( cos( radians(?) ) * cos( radians( ' .
-                self::COLUMN_LATITUDE . ' ) ) * cos( radians( ' .
-                self::COLUMN_LONGTITUDE . ' ) - radians(?) ) + sin( radians(?) ) * sin( radians( ' .
-                self::COLUMN_LATITUDE . ' ) ) ) ) AS distance FROM ' .
-                self::TABLE_DIVE_SHOP . ' HAVING distance < ? ORDER BY distance LIMIT ? , ?';
-        $stmt = $this->conn->prepare($query);
-        $maxRows = $offset + 10;
-        $stmt->bind_param('dddiii', $lat, $lng, $lat, $radius, $offset, $maxRows);
+                'r.' . self::COLUMN_RATE;
+        if ($lat != 0 || $lng != 0) {
+            if ($this->isEmpty($q)) {
+                $query = 'SELECT ' .
+                        $columns .
+                        ', ( 3959 * acos( cos( radians(?) ) * cos( radians( ' .
+                        self::COLUMN_LATITUDE . ' ) ) * cos( radians( ' .
+                        self::COLUMN_LONGTITUDE . ' ) - radians(?) ) + sin( radians(?) ) * sin( radians( ' .
+                        self::COLUMN_LATITUDE . ' ) ) ) ) AS distance' .
+                        ' FROM ' . self::TABLE_DIVE_SHOP . ' d' .
+                        ' LEFT JOIN ' . self::TABLE_RATING . ' r' .
+                        ' ON d.' . self::COLUMN_DIVE_SHOP_ID . '= r.' . self::COLUMN_DIVE_SHOP_ID .
+                        ' HAVING distance < ? ORDER BY distance LIMIT ? , ?';
+                $stmt = $this->conn->prepare($query);
+                $stmt->bind_param('dddiii', $lat, $lng, $lat, $radius, $offset, $maxRows);
+            } else {
+                $searchName = "%$q%";
+                $query = 'SELECT ' .
+                        $columns .
+                        ', ( 3959 * acos( cos( radians(?) ) * cos( radians( ' .
+                        self::COLUMN_LATITUDE . ' ) ) * cos( radians( ' .
+                        self::COLUMN_LONGTITUDE . ' ) - radians(?) ) + sin( radians(?) ) * sin( radians( ' .
+                        self::COLUMN_LATITUDE . ' ) ) ) ) AS distance' .
+                        ' FROM ' . self::TABLE_DIVE_SHOP . ' d'.
+                        ' LEFT JOIN ' . self::TABLE_RATING . ' r' .
+                        ' ON d.' . self::COLUMN_DIVE_SHOP_ID . '= r.' . self::COLUMN_DIVE_SHOP_ID .
+                        ' WHERE ' . self::COLUMN_NAME . " LIKE ?" .
+                        ' HAVING distance < ? ORDER BY distance LIMIT ? , ?';
+                $stmt = $this->conn->prepare($query);
+                $stmt->bind_param('dddsiii', $lat, $lng, $lat, $searchName, $radius, $offset, $maxRows);
+            }
+        } else {
+            if ($this->isEmpty($q)) {
+                $query = 'SELECT ' .
+                        $columns .
+                        ' FROM ' . self::TABLE_DIVE_SHOP . ' d' .
+                        ' LEFT JOIN ' . self::TABLE_RATING . ' r' .
+                        ' ON d.' . self::COLUMN_DIVE_SHOP_ID . '= r.' . self::COLUMN_DIVE_SHOP_ID .
+                        " ORDER BY $order $sort LIMIT ?,?";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bind_param('ii', $offset, $maxRows);
+            } else {
+                $searchName = "%$q%";
+                $query = 'SELECT ' .
+                        $columns .
+                        ' FROM ' . self::TABLE_DIVE_SHOP . ' d'.
+                        ' LEFT JOIN ' . self::TABLE_RATING . ' r' .
+                        ' ON d.' . self::COLUMN_DIVE_SHOP_ID . '= r.' . self::COLUMN_DIVE_SHOP_ID .
+                        ' WHERE ' . self::COLUMN_NAME . " LIKE ? ORDER BY $order $sort LIMIT ?,?";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bind_param('sii', $searchName, $offset, $maxRows);
+            }
+        }
         if ($stmt->execute()) {
             $response['error'] = false;
             $response['message'] = 'Success';
