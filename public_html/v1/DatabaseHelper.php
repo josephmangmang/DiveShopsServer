@@ -740,6 +740,7 @@ class DatabaseHelper {
             $response['dive_sites'] = array();
             $result = $stmt->get_result();
             while ($site = $result->fetch_assoc()) {
+                $site[self::COLUMN_IMAGE] = getDiveSiteImageUrl() . '/' . $site[self::COLUMN_IMAGE];
                 $response['dive_sites'][] = $site;
             }
         } else {
@@ -889,7 +890,7 @@ class DatabaseHelper {
                         self::COLUMN_LATITUDE . ' ) ) * cos( radians( ' .
                         self::COLUMN_LONGTITUDE . ' ) - radians(?) ) + sin( radians(?) ) * sin( radians( ' .
                         self::COLUMN_LATITUDE . ' ) ) ) ) AS distance' .
-                        ' FROM ' . self::TABLE_DIVE_SHOP . ' d'.
+                        ' FROM ' . self::TABLE_DIVE_SHOP . ' d' .
                         ' LEFT JOIN ' . self::TABLE_RATING . ' r' .
                         ' ON d.' . self::COLUMN_DIVE_SHOP_ID . '= r.' . self::COLUMN_DIVE_SHOP_ID .
                         ' WHERE ' . self::COLUMN_NAME . " LIKE ?" .
@@ -911,7 +912,7 @@ class DatabaseHelper {
                 $searchName = "%$q%";
                 $query = 'SELECT ' .
                         $columns .
-                        ' FROM ' . self::TABLE_DIVE_SHOP . ' d'.
+                        ' FROM ' . self::TABLE_DIVE_SHOP . ' d' .
                         ' LEFT JOIN ' . self::TABLE_RATING . ' r' .
                         ' ON d.' . self::COLUMN_DIVE_SHOP_ID . '= r.' . self::COLUMN_DIVE_SHOP_ID .
                         ' WHERE ' . self::COLUMN_NAME . " LIKE ? ORDER BY $order $sort LIMIT ?,?";
@@ -1560,6 +1561,7 @@ class DatabaseHelper {
             $response['message'] = 'Success';
             $response['dive_sites'] = array();
             while ($site = $result->fetch_assoc()) {
+                $site[self::COLUMN_IMAGE] = getDiveSiteImageUrl() . '/' . $site[self::COLUMN_IMAGE];
                 $response['dive_sites'][] = $site;
             }
         }
@@ -1639,6 +1641,7 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $result = $stmt->get_result();
             while ($site = $result->fetch_assoc()) {
+                $site[self::COLUMN_IMAGE] = getDiveSiteImageUrl() . '/' . $site[self::COLUMN_IMAGE];
                 $sites[] = $site;
             }
         }
@@ -2067,4 +2070,16 @@ class AccountType {
     const DIVE_SHOP = 'dive_shop';
     const DIVER = 'diver';
 
+}
+
+function getDiveSiteImageUrl() {
+    return getBaseImageUrl() . '/divesites';
+}
+
+function getBaseImageUrl() {
+    return sprintf(
+            "%s://%s%s", isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
+            $_SERVER['SERVER_NAME'],
+            '/images'
+    );
 }
