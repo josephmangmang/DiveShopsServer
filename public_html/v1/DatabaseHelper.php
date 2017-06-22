@@ -708,9 +708,11 @@ class DatabaseHelper {
      * @param type $offset
      * @return array
      */
-    public function getDiveSites($lat, $lng, $radius = 25, $offset = '0') {
+    public function getDiveSites($lat, $lng, $radius = 25, $offset = '0', $max = 10) {
         if ($lat == 0 && $lng == 0) {
             return $this->getDiveSitesByName("", $offset);
+        } if ($this->isEmpty($max)) {
+            $max = 10;
         }
         $response = array('error' => true, 'message' => 'An error occured while getting list of Dive Site. ');
         if (!ctype_digit($offset)) {
@@ -732,7 +734,7 @@ class DatabaseHelper {
                 self::TABLE_DIVE_SITE . ' HAVING distance < ? ORDER BY distance LIMIT ? , ?';
 
         $stmt = $this->conn->prepare($query);
-        $maxRows = $offset + 10;
+        $maxRows = $offset + $max;
         $stmt->bind_param('dddiii', $lat, $lng, $lat, $radius, $offset, $maxRows);
         if ($stmt->execute()) {
             $response['error'] = false;
@@ -1540,8 +1542,11 @@ class DatabaseHelper {
         return ($type === AccountType::DIVER OR $type === AccountType::DIVE_SHOP);
     }
 
-    public function getDiveSitesByName($searchName, $offset = 0) {
+    public function getDiveSitesByName($searchName, $offset = 0, $max = 10) {
         $response = array('error' => true, 'message' => 'An error occured while getting dive sites. ');
+        if ($this->isEmpty($max)) {
+            $max = 10;
+        }
         $name = "%" . $searchName . "%";
         $stmt = $this->conn->prepare('SELECT ' .
                 self::COLUMN_DIVE_SITE_ID . ',' .
@@ -1553,7 +1558,7 @@ class DatabaseHelper {
                 self::COLUMN_LONGTITUDE .
                 ' FROM ' . self::TABLE_DIVE_SITE .
                 ' WHERE ' . self::COLUMN_NAME . " LIKE ? LIMIT ?,?");
-        $maxRows = $offset + 10;
+        $maxRows = $offset + $max;
         $stmt->bind_param('sii', $name, $offset, $maxRows);
         if ($stmt->execute()) {
             $result = $stmt->get_result();
@@ -2078,8 +2083,6 @@ function getDiveSiteImageUrl() {
 
 function getBaseImageUrl() {
     return sprintf(
-            "%s://%s%s", isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http',
-            $_SERVER['SERVER_NAME'],
-            '/images'
+            "%s://%s%s", isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http', $_SERVER['SERVER_NAME'], '/images'
     );
 }

@@ -7,7 +7,7 @@
  */
 define('DB_NAME', 'dive_tym_database');
 define('DB_USERNAME', 'skimfix');
-define('DB_PASSWORD', 'wkjW391rDY');
+define('DB_PASSWORD', 'p@$$w0rd');
 define('DB_HOST', 'localhost');
 define('DEBUG', true);
 

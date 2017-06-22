@@ -167,6 +167,7 @@ $app->get('/sites', function() use($app) {
     $lng = $app->request->params('lng');
     $radius = $app->request->params('radius');
     $offset = $app->request->params('offset');
+    $max = $app->request->params('max');
     if (!isset($offset) || strlen($offset) <= 0) {
         $offset = '0';
     }
@@ -176,9 +177,9 @@ $app->get('/sites', function() use($app) {
     $databaseHelper = new DatabaseHelper();
     if (isEmpty($lat) && isEmpty($lng)) {
         $searchName = $app->request->params('q');
-        $response = $databaseHelper->getDiveSitesByName($searchName, $offset);
+        $response = $databaseHelper->getDiveSitesByName($searchName, $offset, $max);
     } else {
-        $response = $databaseHelper->getDiveSites($lat, $lng, $radius, $offset);
+        $response = $databaseHelper->getDiveSites($lat, $lng, $radius, $offset, $max);
     }
     echoResponse(200, $response);
 });
