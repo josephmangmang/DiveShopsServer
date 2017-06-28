@@ -952,7 +952,7 @@ class DatabaseHelper {
             $response['message'] = $response['message'] . 'Invalid Dive Shop id.';
             return $response;
         }
-        $response['dive_shop'] = $this->getDiveShop($shopId);
+        $response['dive_shop'] = $this->getDiveShop($shopId[0]);
         if (is_array($response['dive_shop'])) {
             $response['error'] = false;
             $response['message'] = 'Success';
@@ -980,7 +980,7 @@ class DatabaseHelper {
         if ($stmt->execute()) {
             $result = $stmt->get_result();
             $response = $result->fetch_assoc();
-            $response[self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($shopId);
+            $response[self::COLUMN_DIVE_SHOP_ID] = $this->hashids->encode($response[self::COLUMN_DIVE_SHOP_ID]);
             $response['courses'] = $this->getDiveShopCoursesList($shopId);
             $response['boats'] = $this->getDiveShopBoats($shopId);
             $response['guides'] = $this->getDiveShopGuides($shopId);
